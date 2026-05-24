@@ -12,8 +12,8 @@
                     </legend>
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
-                        <pre>  XSS(跨站脚本攻击)利用浏览器对服务器内容的信任，攻击者通过在网页中注入恶意脚本，使这些脚本在用户的浏览器上执行，从而实现攻击。常见的XSS攻击危害包括窃取用户会话信息、篡改网页内容、将用户重定向到恶意网站，以及执行恶意操作(如点击劫持和钓鱼攻击)
-  反射型XSS：攻击者通过在URL参数中注入恶意脚本，使服务器将该脚本直接反射回用户浏览器并执行。该攻击一般不涉及数据库，而是通过服务器处理用户请求时立即返回恶意内容</pre>
+                        <pre>  XSS(跨站脚本攻击)的本质是：不可信数据进入页面执行上下文后，被浏览器当作脚本或可执行HTML解析。常见危害包括窃取会话信息、篡改页面内容、跳转钓鱼页面、诱导用户执行敏感操作等。
+  反射型XSS：攻击载荷通常来自URL参数、表单、Header或路径等请求数据，服务端未做合适的输出编码或上下文处理，就把载荷立即返回到响应页面中执行。该类型通常不依赖数据库，特点是“请求即触发”。</pre>
                     </blockquote>
                 </fieldset>
             </div>
@@ -85,9 +85,9 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 12px;">Java后端返回数据有以下几种形式：
+                                            <pre style="color: #28333e;font-size: 12px;">Java后端返回数据有以下几种形式。是否触发XSS取决于最终Content-Type和前端如何把数据写入页面：
     响应String字符串：返回一个字符串作为响应，一般用于返回纯文本数据
-    响应JSON数据：返回一个JSON对象作为响应，适用于前后端分离或移动端接口
+    响应JSON数据：返回一个JSON对象作为响应，单纯JSON响应一般不会直接执行脚本，但前端若用innerHTML等方式渲染字段仍可能触发XSS
     响应XML数据：返回一个XML对象作为响应，适用于与其他系统进行数据交互
     响应二进制数据：返回一个字节数组或文件流作为响应，适用于文件下载或图片等二进制数据的返回
     响应数据流：返回一个数据流对象作为响应，适用于大文件或大数据量的返回
@@ -157,7 +157,7 @@
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
                                             <pre style="color: #28333e;font-size: 15px;">
-Content-Type属性指定响应的HTTP内容类型。如果未指定ContentType，默认为text/html
+  Content-Type属性指定响应的HTTP内容类型。安全场景中应明确返回text/plain、application/json等合适类型；如果把不可信内容以text/html返回，浏览器会按HTML解析，XSS风险会显著增加
                                             </pre>
                                         </div>
                                     </div>

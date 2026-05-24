@@ -41,7 +41,7 @@ public class ReflectController extends XssBaseController {
         return isValidView(view) ? "vul/xss/reflect/" + view : "error/404";
     }
 
-    @ApiOperation(value = "漏洞场景：GET型与POST型", notes = "原生漏洞场景,未加任何过滤，Controller接口返回Json类型结果")
+    @ApiOperation(value = "漏洞场景：GET型与POST型", notes = "原生漏洞场景，未加任何过滤，Controller接口返回JSON类型结果。JSON本身通常不会直接触发XSS，但前端不安全渲染JSON字段时可能触发")
     @RequestMapping("/vul1")
     @ResponseBody
     @ApiImplicitParam(name = "payload", value = "请求参数", dataType = "String", paramType = "query", dataTypeClass = String.class)
@@ -59,7 +59,7 @@ public class ReflectController extends XssBaseController {
     }
 
     @SneakyThrows
-    @ApiOperation(value = "漏洞场景：Content-Type问题", notes = "Tomcat内置HttpServletResponse，Content-Type导致反射XSS")
+    @ApiOperation(value = "漏洞场景：Content-Type问题", notes = "响应Content-Type决定浏览器解析方式，不可信内容以text/html返回时可能导致反射XSS")
     @GetMapping("/vul3")
     @ResponseBody
     @ApiImplicitParams({
@@ -77,7 +77,7 @@ public class ReflectController extends XssBaseController {
             case "plain":
                 log.info("[+]XSS-反射性-Content-Type：text/plain;charset=utf-8：" + payload);
                 response.getWriter().print(payload);
-                response.setContentType("text/plain;charset=utf-8");    // response默认返回Content-Type类型是text/plain
+                response.setContentType("text/plain;charset=utf-8");
                 response.getWriter().flush();
                 break;
             default:
@@ -91,7 +91,7 @@ public class ReflectController extends XssBaseController {
     private static final String WHITELIST_REGEX = "^[a-zA-Z0-9_\\s]+$";
     private static final Pattern pattern = Pattern.compile(WHITELIST_REGEX);
 
-    @ApiOperation(value = "安全代码：用户输入验证和过滤", notes = "对用户输入的数据进行验证和过滤，确保不包含恶意代码。使用白名单过滤，只允许特定类型的输入，如纯文本或指定格式的数据")
+    @ApiOperation(value = "安全代码：用户输入验证和过滤", notes = "使用白名单限制输入格式，适合约束字段类型；最终仍需根据输出位置进行上下文编码")
     @GetMapping("/safe1")
     @ResponseBody
     @ApiImplicitParams({
@@ -116,13 +116,13 @@ public class ReflectController extends XssBaseController {
         return R.ok(filterContented);
     }
 
-    @ApiOperation(value = "安全代码：内容安全策略-CSP防护", notes = "内容安全策略（Content Security Policy）是一种由浏览器实施的安全机制，旨在减少和防范跨站脚本攻击（XSS）等安全威胁。它通过允许网站管理员定义哪些内容来源是可信任的，从而防止恶意内容的加载和执行")
+    @ApiOperation(value = "安全代码：内容安全策略-CSP防护", notes = "内容安全策略（Content Security Policy）是由浏览器实施的额外防护层，可降低恶意脚本加载和执行风险，但不能替代输出编码与安全模板/DOM用法")
     @GetMapping("/safe2")
     @ResponseBody
     @ApiImplicitParam(name = "payload", value = "请求参数", dataType = "String", paramType = "query", dataTypeClass = String.class)
     public String safe2(@ApiParam(name = "payload", value = "请求参数", required = true) @RequestParam String payload, HttpServletResponse response) {
-        response.setHeader("Content-Security-Policy", "default-src self");
-        response.setHeader("Content-Security-Policy-Report-Only", "default-src 'self'; other-uri /xss/reflect/csp-other-endpoint");
+        response.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'");
+        response.setHeader("Content-Security-Policy-Report-Only", "default-src 'self'; report-uri /xss/reflect/csp-report-endpoint");
         log.info("[-]XSS-反射性-内容安全策略-CSP防护：" + payload);
         return payload;
     }
@@ -152,7 +152,7 @@ public class ReflectController extends XssBaseController {
 //        }
     }
 
-    @ApiOperation(value = "安全代码：特殊字符实体转义", notes = "特殊字符实体转义是一种将 HTML 中的特殊字符转换为预定义实体表示的过程。这种转义是为了确保在 HTML 页面中正确显示特定字符，同时避免它们被浏览器误解为 HTML 标签或JavaScript代码的一部分，从而导致页面结构混乱或安全漏洞。")
+    @ApiOperation(value = "安全代码：HTML正文输出编码", notes = "将HTML正文文本中的特殊字符编码为实体，避免浏览器把不可信数据解析为HTML标签或JavaScript。不同输出上下文需要使用不同编码策略")
     @GetMapping("/safe3")
     @ResponseBody
     @ApiImplicitParams({
@@ -170,11 +170,11 @@ public class ReflectController extends XssBaseController {
                 payload = StringUtils.replace(payload, "'", "&#x27;");
                 payload = StringUtils.replace(payload, "/", "&#x2F;");
                 filterContented = payload;
-                log.info("[-]XSS-反射性-内容安全策略-CSP防护-原生实体转移：" + payload);
+                log.info("[-]XSS-反射型-HTML正文输出编码-手动编码：" + payload);
                 break;
             case "spring":
                 filterContented = HtmlUtils.htmlEscape(payload);
-                log.info("[-]XSS-反射性-内容安全策略-CSP防护-Spring框架：" + payload);
+                log.info("[-]XSS-反射型-HTML正文输出编码-Spring框架：" + payload);
                 break;
             default:
                 return R.error("参数输入有误！");
@@ -182,7 +182,7 @@ public class ReflectController extends XssBaseController {
         return R.ok(filterContented);
     }
 
-    @ApiOperation(value = "安全代码：HttpOnly配置", notes = "HttpOnly是HTTP响应头属性，用于增强Web应用程序安全性。它防止客户端脚本访问(只能通过http/https协议访问)带有HttpOnly标记的 cookie，从而减少跨站点脚本攻击（XSS）的风险。")
+    @ApiOperation(value = "安全代码：HttpOnly配置", notes = "HttpOnly可以阻止客户端脚本直接读取带有该属性的Cookie，降低XSS窃取Cookie的影响，但不能修复XSS本身")
     @RequestMapping(value = "/safe4", method = RequestMethod.GET)
     @ResponseBody
     @ApiImplicitParam(name = "payload", value = "请求参数", dataType = "String", paramType = "query", dataTypeClass = String.class)

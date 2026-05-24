@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @Date: 2024/5/23 17:25
  */
 @Slf4j
-@Api(value = "ReflectController", tags = "跨站脚本-Dom型XSS")
+@Api(value = "DomController", tags = "跨站脚本-DOM型XSS")
 @Controller
 @CrossOrigin(origins = "*")
 @RequestMapping("/xss/dom")

@@ -10,7 +10,7 @@
                     <legend><a style="color: rgb(30 159 255)" class="xss-store">跨站脚本攻击 - 存储型XSS</a></legend>
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
-                        <pre>  存储型XSS：攻击者将恶意脚本上传到目标网站的数据库，用户访问网站时执行这些恶意脚本，达到攻击目的。该攻击经过服务器和数据库</pre>
+                        <pre>  存储型XSS：攻击者把恶意内容提交到目标系统，系统将其保存到数据库、缓存、文件、对象存储、日志等持久化位置；其他用户访问相关页面时，服务端或前端把这段内容取出并以不安全方式渲染，最终在用户浏览器中执行。该类型的关键特征是“先存储、后触发”，不一定只经过数据库。</pre>
                     </blockquote>
                 </fieldset>
             </div>
@@ -66,8 +66,9 @@
                                     <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                     <div class="layui-card-body layui-text layadmin-text">
                                         <pre style="color: #28333e;font-size: 15px;">漏洞场景：
-    用户交互的地方：get、post、headers、反馈与浏览、富文本编辑器、标签插入和自定义
-    数据输出的地方：用户资料、关键词、评论、留言、关键词、标签、说明、文件上传</pre>
+  输入来源：GET/POST参数、Header、User-Agent、评论、留言、富文本编辑器、标签、自定义字段、文件元数据
+  持久化位置：数据库、缓存、文件、对象存储、搜索索引、日志系统
+  输出位置：用户资料、评论列表、后台审核页、关键词、标签、说明、文件预览页等</pre>
                                     </div>
                                 </div>
                             </div>
@@ -108,7 +109,7 @@
             <div class="layui-col-md12" style="margin-top: 10px">
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-anquan">  安全场景：前端实体转义</span></h1>
+                        <h1><span class="iconfont icon-anquan">  安全场景：输出编码</span></h1>
                         <div class="layui-tab-content">
                             <div class="layui-tab-item layui-show">
                                 <blockquote class="layui-elem-quote main_btn">
@@ -150,7 +151,12 @@
                                 <div class="layui-card">
                                     <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                     <div class="layui-card-body layui-text layadmin-text">
-                                        <pre style="color: #28333e;font-size: 15px;">  前端实体转义就是将可能是包含HTML标签的内容，先中转存储为纯文本，当浏览器进行渲染时，会将纯文本内容中特殊字符进行实体转义(浏览器策略)，确保可以正确展示</pre>
+                                        <pre style="color: #28333e;font-size: 15px;">存储型XSS的关键修复点是“危险数据进入页面前必须按输出上下文处理”：
+  1. 普通文本展示：输出时进行HTML实体编码，避免浏览器把内容当作标签或脚本解析
+  2. 富文本业务：入库前使用白名单净化，只允许业务需要的标签、属性和协议
+  3. URL、HTML属性、JavaScript、CSS等不同上下文，需要使用对应的上下文编码或白名单校验
+
+当前安全场景用于演示表格渲染阶段的输出编码：数据库中仍保存原始输入，但页面展示时将Content和User-Agent编码后再渲染。真实业务中还应根据字段类型做输入约束，并对富文本等特殊内容做白名单净化。</pre>
                                     </div>
                                 </div>
                             </div>
@@ -330,8 +336,11 @@
 
         // HTML 实体转义函数
         function escapeHtml(html) {
+            if (html === null || html === undefined) {
+                return '';
+            }
             var text = document.createElement("textarea");
-            text.textContent = html;
+            text.textContent = String(html);
             return text.innerHTML;
         }
 

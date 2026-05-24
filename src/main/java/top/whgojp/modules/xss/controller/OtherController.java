@@ -84,7 +84,7 @@ public class OtherController {
     private UploadUtil uploadUtil;
 
     // 文件上传接口
-    @ApiOperation(value = "漏洞场景：文件上传导致存储XSS", notes = "原生漏洞场景,未加任何过滤，Controller接口返回Json类型结果")
+    @ApiOperation(value = "漏洞场景：文件上传导致存储XSS", notes = "上传可被浏览器或预览服务解析的文件，后续访问文件时可能触发XSS")
     @RequestMapping("/vul1Upload")
     @ResponseBody
     @SneakyThrows
@@ -110,6 +110,7 @@ public class OtherController {
                 } catch (Exception e) {
                     return R.error("上传错误，请检查后重新上传：" + e.getMessage());
                 }
+            // XML解析成功后继续落盘，便于演示“解析 + 可访问文件”组合场景。
             case "html":
             case "svg":
             case "pdf":
@@ -122,7 +123,7 @@ public class OtherController {
                 return R.error(res);
         }
     }
-    @ApiOperation(value = "漏洞场景：模版引擎解析导致存储XSS", notes = "")
+    @ApiOperation(value = "漏洞场景：模板引擎不安全渲染导致XSS", notes = "th:utext会把内容作为HTML渲染，th:text会进行转义")
     @GetMapping("/vul2OtherTemplate")
     public String vul2OtherTemplate(@RequestParam("payload") String payload,
                                           @RequestParam("type") String type, Model model) {
