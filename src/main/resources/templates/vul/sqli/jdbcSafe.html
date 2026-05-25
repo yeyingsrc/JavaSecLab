@@ -12,7 +12,9 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>  SQL注入是一种常见的Web应用程序安全漏洞，攻击者利用这种漏洞通过在输入字段中插入恶意SQL语句来执行非授权的数据库操作。这可能导致数据泄露、数据损坏或者完整性受损</pre>
+                        <pre>  SQL注入的本质是：不可信输入被拼接进SQL语法结构，导致攻击者改变原SQL语义，进而造成越权查询、数据泄露、数据篡改或破坏。</pre>
+                        <pre>  注入点不只来自输入框，也可能来自URL参数、Header、JSON字段、排序字段、分页参数以及ORM查询语句等位置。</pre>
+                        <pre>  修复优先级：参数值使用PreparedStatement/JdbcTemplate参数绑定；列名、排序方向、表名等SQL结构必须使用枚举或白名单映射。</pre>
                         <pre>  JDBC(Java Database Connectivity)是一套用于在Java程序中操作关系型数据库的API。它提供了一种标准的Java方法来连接和执行SQL查询，从而实现与数据库的交互</pre>
                         </p>
                     </blockquote>
@@ -147,7 +149,7 @@
             <div class="layui-col-md12" style="margin-top: 10px">
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-anquan">  安全场景：JdbcTemplate预编译</span></h1>
+                        <h1><span class="iconfont icon-anquan">  安全场景：JdbcTemplate参数绑定</span></h1>
                         <div class="layui-tab layui-tab-brief">
                             <ul class="layui-tab-title">
                                 <li class="layui-this">增加</li>
@@ -273,7 +275,7 @@
             <div class="layui-col-md12" style="margin-top: 10px">
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-anquan">  安全场景：自定义黑名单-用户输入过滤</span></h1>
+                        <h1><span class="iconfont icon-anquan">  辅助场景：黑名单检测（非首选修复）</span></h1>
                         <div class="layui-tab layui-tab-brief">
                             <ul class="layui-tab-title">
                                 <li class="layui-this">增加</li>
@@ -398,7 +400,7 @@
             <div class="layui-col-md12" style="margin-top: 10px">
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-anquan">  安全场景：数据类型-用户请求参数校验</span></h1>
+                        <h1><span class="iconfont icon-anquan">  辅助场景：数据类型-用户请求参数校验</span></h1>
                         <div class="layui-tab layui-tab-brief">
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
@@ -453,7 +455,7 @@
             <div class="layui-col-md12" style="margin-top: 10px">
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-anquan">  安全场景：Web安全框架-采用ESAPI过滤</span></h1>
+                        <h1><span class="iconfont icon-anquan">  辅助场景：ESAPI encodeForSQL</span></h1>
                         <div class="layui-tab layui-tab-brief">
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">

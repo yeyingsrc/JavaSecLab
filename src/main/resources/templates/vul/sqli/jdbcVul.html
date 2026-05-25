@@ -12,7 +12,9 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>  SQL注入是一种常见的Web应用程序安全漏洞，攻击者利用这种漏洞通过在输入字段中插入恶意SQL语句来执行非授权的数据库操作。这可能导致数据泄露、数据损坏或者完整性受损</pre>
+                        <pre>  SQL注入的本质是：不可信输入被拼接进SQL语法结构，导致攻击者改变原SQL语义，进而造成越权查询、数据泄露、数据篡改或破坏。</pre>
+                        <pre>  注入点不只来自输入框，也可能来自URL参数、Header、JSON字段、排序字段、分页参数以及ORM查询语句等位置。</pre>
+                        <pre>  修复优先级：参数值使用PreparedStatement/JdbcTemplate参数绑定；列名、排序方向、表名等SQL结构必须使用枚举或白名单映射。</pre>
                         <pre>  JDBC(Java Database Connectivity)是一套用于在Java程序中操作关系型数据库的API。它提供了一种标准的Java方法来连接和执行SQL查询，从而实现与数据库的交互</pre>
                         </p>
                     </blockquote>
@@ -171,7 +173,7 @@
             <div class="layui-col-md12" style="margin-top: 10px">
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-bug">  漏洞场景：JDBC-预编译拼接</span></h1>
+                        <h1><span class="iconfont icon-bug">  漏洞场景：JDBC-伪预编译拼接</span></h1>
                         <div class="layui-tab layui-tab-brief">
                             <ul class="layui-tab-title">
                                 <li class="layui-this">增加</li>
@@ -442,15 +444,16 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                layer.msg("正在下载流量包：" + selectedValue + ".pcapng");
             }
         }
         form.on('select(sqliFlowSelect)', function (data) {
             let selectedValue = data.value;
             let fileMap = {
-                "upload_html": "/other/datapackage/sqli/sqli_time.pcapng",
-                "upload_svg": "/other/datapackage/sqli/sqli_boolean.pcapng",
-                "upload_pdf": "/other/datapackage/sqli/sqli_error.pcapng",
-                "upload_xml": "/other/datapackage/sqli/sqli_xpath.pcapng"
+                "sqli_time": "/other/datapackage/sqli/sqli_time.pcapng",
+                "sqli_boolean": "/other/datapackage/sqli/sqli_boolean.pcapng",
+                "sqli_error": "/other/datapackage/sqli/sqli_error.pcapng",
+                "sqli_xpath": "/other/datapackage/sqli/sqli_xpath.pcapng"
             };
             triggerDownload(fileMap, selectedValue);
         });

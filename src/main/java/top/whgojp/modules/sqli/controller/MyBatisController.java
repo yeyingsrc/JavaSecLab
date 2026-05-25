@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import top.whgojp.common.utils.CheckUserInput;
 import top.whgojp.modules.sqli.entity.Sqli;
 import top.whgojp.modules.sqli.service.SqliService;
 
@@ -34,6 +35,8 @@ import java.util.List;
 public class MyBatisController {
     @Autowired
     private SqliService sqliService;
+    @Autowired
+    CheckUserInput checkUserInput;
     Logger log = LoggerFactory.getLogger(JdbcController.class);
 
     @GetMapping("")
@@ -64,11 +67,17 @@ public class MyBatisController {
                     log.info(message);
                     return R.ok(message);
                 case "delete":
-                    rowsAffected = sqliService.nativeDelete(Integer.valueOf(id));
+                    if (id == null) {
+                        return R.error("id不能为空!");
+                    }
+                    rowsAffected = sqliService.nativeDelete(id);
                     message = (rowsAffected > 0) ? "数据删除成功" : "数据删除失败 用户ID:" + id + " 不存在!";
                     log.info(message);
                     return R.ok(message);
                 case "update":
+                    if (id == null) {
+                        return R.error("id不能为空!");
+                    }
                     rowsAffected = sqliService.nativeUpdate(new Sqli(id, username, password));
                     message = (rowsAffected > 0) ? "数据更新成功" : "数据更新失败 用户ID不存在!";
                     log.info(message);
@@ -121,18 +130,30 @@ public class MyBatisController {
                     return R.ok(message);
                 case "delete":
                     //这里删除数据使用自定义代码
-                    rowsAffected = sqliService.customDelete(Integer.valueOf(id));
+                    if (id == null) {
+                        return R.error("id不能为空!");
+                    }
+                    rowsAffected = sqliService.customDelete(id);
                     message = (rowsAffected > 0) ? "数据删除成功" : "数据删除失败 用户ID:" + id + " 不存在!";
                     log.info(message);
                     return R.ok(message);
                 case "update":
                     //使用MyBatis注解
-                    rowsAffected = sqliService.customUpdate(new Sqli(Integer.valueOf(id), username, password));
+                    if (id == null) {
+                        return R.error("id不能为空!");
+                    }
+                    rowsAffected = sqliService.customUpdate(new Sqli(id, username, password));
                     message = (rowsAffected > 0) ? "数据更新成功" : "数据更新失败 用户ID不存在!";
                     log.info(message);
                     return R.ok(message);
                 case "select":
-                    final Sqli user = sqliService.customSelect(Integer.valueOf(id));
+                    if (id == null) {
+                        return R.error("id不能为空!");
+                    }
+                    final Sqli user = sqliService.customSelect(id);
+                    if (user == null) {
+                        return R.ok("用户ID不存在!");
+                    }
                     message = "查询成功，用户名：" + user.getUsername() + " 密码：" + user.getPassword();
                     return R.ok(message);
                 default:
@@ -167,6 +188,10 @@ public class MyBatisController {
                     sqlis = sqliService.orderByPrepareStatement(field);
                     break;
                 case "writeList":
+                    if (!checkUserInput.checkSqlWhiteList(field)) {
+                        log.error("field字段不合法！field:" + field);
+                        return R.error("field字段不合法！");
+                    }
                     sqlis = sqliService.orderByWriteList(field);
                     break;
                 default:
@@ -246,8 +271,11 @@ public class MyBatisController {
                     sqlis = sqliService.inPrepareStatement(scope);
                     break;
                 case "Foreach":
-
-                    sqlis = sqliService.inSafeForeach(parseInputToList(scope));
+                    List<Integer> idList = parseInputToList(scope);
+                    if (idList.isEmpty()) {
+                        return R.error("scope中没有合法整数ID!");
+                    }
+                    sqlis = sqliService.inSafeForeach(idList);
                     break;
                 default:
                     return R.error("type字段有误：传输数据异常,请检查^_^");
@@ -262,6 +290,9 @@ public class MyBatisController {
 
     public static List<Integer> parseInputToList(String input) {
         List<Integer> resultList = new ArrayList<>();
+        if (input == null || input.trim().isEmpty()) {
+            return resultList;
+        }
 
         // 切割字符串并转换为整数
         String[] parts = input.split(",");

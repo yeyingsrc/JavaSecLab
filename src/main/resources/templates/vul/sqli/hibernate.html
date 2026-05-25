@@ -11,10 +11,12 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>   Hibernate是一个流行的ORM框架，它提供了多种查询方式，如HQL、Criteria API和原生SQL。虽然Hibernate提供了参数绑定等安全特性，但不当使用仍可能导致SQL注入漏洞。</pre>
+                        <pre>  SQL注入的本质是：不可信输入被拼接进SQL语法结构，导致攻击者改变原SQL语义。Hibernate中的HQL、原生SQL和动态排序字段同样需要关注。</pre>
+                        <pre>  Hibernate是一个流行的ORM框架，它提供了多种查询方式，如HQL、Criteria API和原生SQL。虽然Hibernate提供了参数绑定等安全特性，但不当使用仍可能导致SQL注入漏洞。</pre>
+                        <pre>  修复优先级：查询参数使用setParameter绑定；动态字段、排序方向等SQL结构使用枚举或白名单映射。</pre>
                         </p>
                         <p>
-                        <pre>   在Hibernate中，SQL注入可能发生在HQL查询、原生SQL查询和动态排序等场景。攻击者可以通过注入恶意输入来执行非授权的数据库操作。</pre>
+                        <pre>  在Hibernate中，SQL注入可能发生在HQL查询、原生SQL查询和动态排序等场景。攻击者可以通过注入恶意输入来执行非授权的数据库操作。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -61,12 +63,8 @@
                             <div class="layui-card">
                                 <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                 <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 14px;">由于Hibernate和Mybatis做兼容较为困难，这里只以查询场景为例，部分场景需结合后端日志进行测试。
-在测试过程中，建议关注以下几点:
-1. 观察SQL语句的执行结果和后端日志输出
-2. 尝试不同类型的SQL注入payload(如联合查询、布尔盲注、延时注入等)
-3. 注意HQL和原生SQL的语法差异
-4. 测试时建议打开Hibernate的show_sql选项以便观察实际执行的SQL语句</pre>
+                                            <pre style="color: #28333e;font-size: 14px;">  Hibernate需要同时关注HQL和原生SQL：参数值用setParameter绑定，动态列名、排序方向等SQL结构用枚举映射。
+  测试时建议关注SQL执行结果和后端日志，并区分HQL语法与原生SQL语法差异。</pre>
                                 </div>
                             </div>
 

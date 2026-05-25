@@ -12,11 +12,12 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>  MyBatis是一款半ORM（对象关系映射）框架，它允许开发者通过简单的XML或注解配置，将原生SQL、存储过程以及高级映射映射到Java对象（POJO）。MyBatis的设计目标是简化数据库操作，避免了几乎所有的JDBC代码和手动设置参数，使得数据持久化操作更加直观和便捷</pre>
+                        <pre>  SQL注入的本质是：不可信输入被拼接进SQL语法结构，导致攻击者改变原SQL语义。MyBatis中的XML、注解SQL和动态SQL片段都需要关注这一点。</pre>
+                        <pre>  MyBatis是一款半ORM（对象关系映射）框架，它允许开发者通过简单的XML或注解配置，将原生SQL、存储过程以及高级映射映射到Java对象（POJO）。</pre>
                         </p>
                         <p>
-                        <pre>   #{}: 用于参数的预处理，能够安全地传递参数，并支持JDBC类型的指定
-   ${}: 用于静态SQL片段的替换，比如表名、列名等动态确定的部分</pre>
+                        <pre>  #{}：用于绑定“值”，底层走PreparedStatement参数化，适合普通查询条件、LIKE值、IN中的单个元素等。
+  ${}：用于SQL片段替换，只能用于受控的表名、列名、排序方向等SQL结构；用户输入直接进入${}就是高危点。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -25,7 +26,7 @@
             <div class="layui-col-md12" style="margin-top: 10px">
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-anquan">  安全代码：原生代码</span></h1>
+                        <h1><span class="iconfont icon-anquan">  安全场景：MyBatis内置方法</span></h1>
                         <div class="layui-tab layui-tab-brief">
                             <ul class="layui-tab-title">
                                 <li class="layui-this">增加</li>
@@ -150,7 +151,7 @@
             <div class="layui-col-md12" style="margin-top: 10px">
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-anquan">  安全代码：自定义方法</span></h1>
+                        <h1><span class="iconfont icon-anquan">  安全场景：MyBatis #{} 参数绑定</span></h1>
                         <div class="layui-tab layui-tab-brief">
                             <ul class="layui-tab-title">
                                 <li class="layui-this">增加</li>
@@ -318,7 +319,7 @@
                                                 <input type="text" name="field" style="width: 150px;" required
                                                        lay-verify="required" placeholder="排序字段" autocomplete="off"
                                                        class="layui-input">
-                                                <p>预编译下 ordery by排序失效 使用默认排序</p>
+                                                <p>#{}只能绑定值，不能绑定列名，ORDER BY #{} 不会按传入字段排序</p>
                                             </div>
                                             <div style="display: flex; align-items: center;">
                                                 <button class="layui-btn layui-btn-normal"
@@ -350,6 +351,14 @@
                                 </div>
 
                                 <div class="layui-col-md12">
+                                    <div class="layui-card">
+                                        <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
+                                        <div class="layui-card-body layui-text layadmin-text">
+                                <pre style="color: #28333e;font-size: 12px;">  MyBatis 的 #{} 适合值绑定，不适合列名、表名、关键字、排序方向这类SQL结构。
+  ${} 不是绝对不能用，但只能用于白名单枚举后的受控SQL片段。
+  ORDER BY ${field} 如果直接接收用户输入，就是动态结构注入；正确做法是字段枚举映射。</pre>
+                                        </div>
+                                    </div>
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-warning icon-output"></i>测试结果</div>
                                         <div class="layui-card-body layui-text layadmin-text">
@@ -460,7 +469,7 @@
                         <div class="layui-tab layui-tab-brief">
                             <ul class="layui-tab-title">
                                 <li class="layui-this">${}</li>
-                                <li>#[]</li>
+                                <li>#{}写法</li>
                                 <li>Foreach</li>
                             </ul>
                             <div class="layui-tab-content">

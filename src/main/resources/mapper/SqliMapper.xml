@@ -14,8 +14,8 @@
         id,username,password
     </sql>
     <!--    自定义mapper增删改查方法
-    #{value} 在预处理时，会把参数部分用一个占位符 ? 替代，其中 value 表示接受输入参数的名称。能有效解决 SQL 注入问题
-    ${value} 表示使用拼接字符串，将接受到参数的内容不加任何修饰符拼接在 SQL 中，使用${}拼接 sql，将引起 SQL 注入问题。
+    #{value} 在预处理时，会把参数值用占位符 ? 替代，适合普通查询条件、LIKE值、IN中的单个元素等。
+    ${value} 表示SQL片段替换，只能用于白名单枚举后的受控SQL结构；用户输入直接进入${}将引起SQL注入问题。
     -->
     <insert id="customInsert">
         insert into sqli (id,username,password) values (#{id,jdbcType=INTEGER},#{username,jdbcType=VARCHAR},#{password,jdbcType=VARCHAR})
@@ -33,7 +33,7 @@
 <!--        select * from sqli where id = #{id,jdbcType=INTEGER}-->
 <!--    </select>-->
 
-<!--    Order by下的${}拼接注入问题-->
+<!--    Order by下的${}拼接注入问题：${}只能用于白名单枚举后的受控SQL结构-->
     <select id="orderByVul" resultType="top.whgojp.modules.sqli.entity.Sqli">
         SELECT * FROM sqli
         <if test="field != null and field != ''">
@@ -41,14 +41,14 @@
         </if>
     </select>
 
-<!--    Order by下的#{}写法 排序不生效-->
+<!--    Order by下的#{}写法：#{}只能绑定值，不能绑定列名，所以排序不生效-->
     <select id="orderByPrepareStatement" resultType="top.whgojp.modules.sqli.entity.Sqli">
         SELECT * FROM sqli
         <if test="field != null and field != ''">
             ORDER BY #{field}
         </if>
     </select>
-<!--    Order by下的安全写法 白名单-->
+<!--    Order by下的安全写法：列名先做白名单枚举，再进入${}拼接受控SQL结构-->
     <select id="orderByWriteList" resultType="top.whgojp.modules.sqli.entity.Sqli">
         SELECT * FROM sqli
         <if test="field != null and field != ''">

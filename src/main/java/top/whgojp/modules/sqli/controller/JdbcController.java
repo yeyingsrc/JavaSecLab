@@ -21,6 +21,7 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.*;
+import java.util.List;
 import java.util.Map;
 
 
@@ -60,7 +61,7 @@ public class JdbcController {
 
     @RequestMapping("/jdbcSpecial")
     public String sqliJdbcSpecial() {
-        return "vul/sqli/JdbcSpecial";
+        return "vul/sqli/jdbcSpecial";
     }
 
     @ApiOperation(value = "漏洞场景：JDBC-原生SQL语句拼接", notes = "原生sql语句动态拼接 参数未进行任何处理")
@@ -290,19 +291,12 @@ public class JdbcController {
                     return R.ok(message);
                 case "select":
                     sql = "SELECT * FROM sqli WHERE id  = " + id;
-                    Map<String, Object> stringObjectMap;
-                    try {
-                        stringObjectMap = jdbctemplate.queryForMap(sql);
-                    } catch (EmptyResultDataAccessException e) {
+                    List<Map<String, Object>> resultList = jdbctemplate.queryForList(sql);
+                    if (resultList.isEmpty()) {
                         return R.error("用户ID不存在");
                     }
-                    final JSONObject jsonObject = JSONUtil.createObj();
-                    jsonObject.put("result", stringObjectMap);
-                    log.info(stringObjectMap.toString());
-                    String user = (String) stringObjectMap.get("username");
-                    String pass = (String) stringObjectMap.get("password");
-
-                    message = "查询成功，用户名：" + user + " 密码：" + pass;
+                    log.info(resultList.toString());
+                    message = "查询成功，找到 " + resultList.size() + " 条记录 " + JSONUtil.toJsonStr(resultList);
                     return R.ok(message);
 
                 default:
@@ -370,7 +364,6 @@ public class JdbcController {
                     stmt.setString(1, username);
                     stmt.setString(2, password);
                     stmt.setString(3, id);
-                    stmt.executeUpdate();
 
                     rowsAffected = stmt.executeUpdate();
                     stmt.close();
@@ -405,7 +398,7 @@ public class JdbcController {
         }
     }
 
-    @ApiOperation(value = "安全代码：JdbcTemplate预编译", notes = "JDBCTemplate预编译 此时在常规DML场景有效的防止了SQL注入攻击的发生")
+    @ApiOperation(value = "安全代码：JdbcTemplate参数绑定", notes = "JdbcTemplate通过占位符和参数绑定分离SQL结构与参数值，可在常规DML场景中有效防止SQL注入")
     @GetMapping("/safe2")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "type", value = "操作类型", required = true, dataType = "String", paramType = "query", dataTypeClass = String.class),
@@ -475,7 +468,7 @@ public class JdbcController {
         }
     }
 
-    @ApiOperation(value = "安全代码：自定义黑名单-用户输入过滤", notes = "检测用户输入是否存在敏感字符：'、;、--、+、,、%、=、>、<、*、(、)、and、or、exeinsert、select、delete、update、count、drop、chr、midmaster、truncate、char、declare")
+    @ApiOperation(value = "辅助方案：自定义黑名单-用户输入过滤", notes = "黑名单只能作为辅助检测或拦截，不应替代参数化查询。遗漏关键字、编码绕过、语法变形都可能导致绕过。")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "type", value = "操作类型", required = true, dataType = "String", paramType = "query", dataTypeClass = String.class),
             @ApiImplicitParam(name = "id", value = "用户ID", dataType = "String", paramType = "query", dataTypeClass = String.class),
@@ -572,21 +565,30 @@ public class JdbcController {
     // 对用户输入进行校验后 同样也可以避免SQL注入 后续在MyBatis模块中 将通过validation模块 利用Spring框架提供的注解来对请求参数进行验证，从而确保它们满足特定的条件
     @ApiOperation(value = "安全代码：数据类型-用户请求参数校验", notes = "强制类型转换 对用户请求参数进行校验")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "id", value = "用户ID", dataType = "Integer", paramType = "query", dataTypeClass = Integer.class)        // 这里使用了Integer类型
+            @ApiImplicitParam(name = "id", value = "用户ID", dataType = "String", paramType = "query", dataTypeClass = String.class)
     })
     @ResponseBody
     @GetMapping("/safe4")
     public R safe4(
-            @ApiParam(name = "id", value = "用户ID") @RequestParam(required = false) Integer id) {
+            @ApiParam(name = "id", value = "用户ID") @RequestParam(required = false) String id) {
         String sql = "";
         try {
+            if (id == null || id.trim().isEmpty()) {
+                return R.error("请输入用户id");
+            }
+            Integer userId;
+            try {
+                userId = Integer.valueOf(id);
+            } catch (NumberFormatException e) {
+                return R.error("用户ID必须为整数");
+            }
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPass);
             Statement stmt = conn.createStatement();
             String message;
-            message = checkUserInput.checkUser(id);
+            message = checkUserInput.checkUser(userId);
             if (!message.isEmpty()) return R.error(message);
-            sql = "SELECT * FROM sqli WHERE id  = " + id;
+            sql = "SELECT * FROM sqli WHERE id  = " + userId;
             log.info("当前执行数据查询操作:" + sql);
             ResultSet rs = stmt.executeQuery(sql);
             if (!rs.next()) {
@@ -607,7 +609,7 @@ public class JdbcController {
         }
     }
 
-    @ApiOperation(value = "安全代码：Web安全框架-采用ESAPI过滤", notes = "ESAPI提供了多种输入验证API，提供对XSS攻击和SQL注入攻击等的防护")
+    @ApiOperation(value = "辅助方案：ESAPI encodeForSQL", notes = "encodeForSQL是历史方案或特定数据库Codec场景下的补充手段，不推荐作为SQL注入的首选修复。优先使用参数化查询。")
     @ApiImplicitParam(name = "id", value = "用户ID", dataType = "String", paramType = "query", dataTypeClass = String.class)
     @GetMapping("/safe5")
     @ResponseBody
@@ -618,7 +620,7 @@ public class JdbcController {
             Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPass);
 
             Statement stmt = conn.createStatement();
-            // 使用了 Oracle 的编解码器 OracleCodec 和 ESAPI 库来对 ID 进行编码，以防止 SQL 注入攻击。
+            // encodeForSQL是历史方案或特定数据库Codec场景下的补充手段，优先使用参数化查询。
             String sql = "select * from sqli where id = '" + ESAPI.encoder().encodeForSQL(oracleCodec, id) + "'";
 //            String sql = "select * from sqli where id = '" + id + "'";
             log.info("当前执行数据查询操作:" + sql);
@@ -648,7 +650,7 @@ public class JdbcController {
         并且预编译还与 MySQL Connector/J（JDBC驱动）的版本有关， Connector/J 5.0.5之前的版本默认支持预编译， Connector/J 5.0.5之后的版本默认不支持预编译，
          所以我们用的Connector/J 5.0.5驱动以后版本的话默认都是没有打开预编译的 （如果需要打开预编译，需要配置 useServerPrepStmts 参数）
      */
-    @ApiOperation(value = "特殊场景：使用prepareStatement时，order by下的sql注入问题", notes = "ORDER BY关键字用于按升序或降序对结果集进行排序。 由于order by后面需要紧跟column_name，而预编译是参数化字符串，而order by后面紧跟字符串就会不支持原有功能 使用默认排序，因此通常防御order by注入需要使用白名单的方式")
+    @ApiOperation(value = "特殊场景：使用prepareStatement时，order by下的sql注入问题", notes = "占位符只能绑定值，不能绑定列名、表名、关键字、排序方向等SQL结构。ORDER BY动态字段应使用枚举映射或白名单。")
     @GetMapping("/special1-OrderBy")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "type", value = "操作类型", required = true, dataType = "String", paramType = "query", dataTypeClass = String.class),
@@ -688,7 +690,7 @@ public class JdbcController {
                     return R.ok(jsonArray.toString());
 
                 case "prepareStatement":
-                    // 可以测试下 预编译没有报错 不过插入语句不生效 默认使用主键升序
+                    // 占位符只能绑定值，不能把用户输入变成列名。这里不会按传入字段排序。
                     sql = "select * from sqli order by ?";
                     log.info("当前执行数据排序操作：" + sql + " 参数：" + field);
                     preparedStatement = conn.prepareStatement(sql);
@@ -708,11 +710,11 @@ public class JdbcController {
                     }
                     return R.ok(jsonArray.toString());
                 case "writeList":
-                    sql = "SELECT * FROM sqli ORDER BY " + field;
                     if (!checkUserInput.checkSqlWhiteList(field)) {
                         log.error("field字段不合法！field:" + field);
                         return R.error("field字段不合法！");
                     }
+                    sql = "SELECT * FROM sqli ORDER BY " + field;
                     log.info("当前执行数据排序操作：" + sql + " 参数：" + field);
                     preparedStatement = conn.prepareStatement(sql);
                     rs = preparedStatement.executeQuery();
@@ -831,11 +833,6 @@ public class JdbcController {
                     sql = "SELECT * FROM sqli ORDER BY id DESC LIMIT " + size;
                     log.info("当前执行数据查询操作:" + sql);
                     rs = stmt.executeQuery(sql);
-                    if (!rs.next()) {
-                        stmt.close();
-                        conn.close();
-                        return R.error("没有相关用户信息");
-                    }
                     JSONArray jsonArray = new JSONArray();
                     while (rs.next()) {
                         String id = rs.getString("id");
@@ -849,12 +846,21 @@ public class JdbcController {
                     }
                     stmt.close();
                     conn.close();
+                    if (jsonArray.isEmpty()) {
+                        return R.error("没有相关用户信息");
+                    }
                     return R.ok(jsonArray.toString());
                 case "prepareStatement":                                         // 使用预编译
                     sql = "SELECT * FROM sqli ORDER BY id DESC LIMIT ?";
                     log.info("执行的sql语句：" + sql);
+                    int limitSize;
+                    try {
+                        limitSize = Integer.parseInt(size);
+                    } catch (NumberFormatException e) {
+                        return R.error("size必须为整数");
+                    }
                     preparedStatement = conn.prepareStatement(sql);
-                    preparedStatement.setString(1, size);
+                    preparedStatement.setInt(1, limitSize);
                     rs = preparedStatement.executeQuery();
 
                     jsonArray = new JSONArray();
@@ -876,6 +882,136 @@ public class JdbcController {
             log.error(e.toString());
             return R.error(e.toString());
         }
+    }
+
+    @ApiOperation(value = "特殊场景：二次SQL注入", notes = "第一次使用参数化写入恶意数据，第二次从数据库取出该数据并拼接进SQL时触发注入。")
+    @GetMapping("/special4-SecondOrder")
+    @ResponseBody
+    public R special4SecondOrder(
+            @ApiParam(name = "type", value = "操作类型：store、trigger、safeTrigger", required = true) @RequestParam String type,
+            @ApiParam(name = "id", value = "用户ID") @RequestParam(required = false) String id,
+            @ApiParam(name = "username", value = "用户名") @RequestParam(required = false) String username,
+            @ApiParam(name = "password", value = "密码") @RequestParam(required = false) String password
+    ) {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPass)) {
+                switch (type) {
+                    case "store":
+                        if (username == null || username.trim().isEmpty()) {
+                            return R.error("username不能为空!");
+                        }
+                        String insertSql = "INSERT INTO sqli (username, password) VALUES (?, ?)";
+                        log.info("二次注入第一步，参数化写入数据: {}", insertSql);
+                        try (PreparedStatement preparedStatement = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+                            preparedStatement.setString(1, username);
+                            preparedStatement.setString(2, password);
+                            int rowsAffected = preparedStatement.executeUpdate();
+                            String newId = "";
+                            try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                                if (generatedKeys.next()) {
+                                    newId = generatedKeys.getString(1);
+                                }
+                            }
+                            return R.ok("数据写入成功，影响行数：" + rowsAffected + "，新用户ID：" + newId + "。下一步使用该ID触发二次查询。");
+                        }
+                    case "trigger":
+                        return queryByStoredUsername(conn, id, false);
+                    case "safeTrigger":
+                        return queryByStoredUsername(conn, id, true);
+                    default:
+                        return R.error("type字段有误：传输数据异常,请检查^_^");
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.toString());
+            return R.error(e.toString());
+        }
+    }
+
+    @ApiOperation(value = "特殊场景：UNION联合查询回显", notes = "通过UNION SELECT拼接额外查询结果，使数据库名、当前用户等信息进入正常查询回显。")
+    @GetMapping("/special5-Union")
+    @ResponseBody
+    public R special5Union(
+            @ApiParam(name = "type", value = "操作类型：raw、prepareStatement", required = true) @RequestParam String type,
+            @ApiParam(name = "id", value = "用户ID或UNION Payload") @RequestParam(required = false) String id
+    ) {
+        String sql = "";
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPass)) {
+                ResultSet rs;
+                switch (type) {
+                    case "raw":
+                        sql = "SELECT id, username, password FROM sqli WHERE id = " + id;
+                        log.info("当前执行UNION回显查询操作: {}", sql);
+                        try (Statement stmt = conn.createStatement()) {
+                            rs = stmt.executeQuery(sql);
+                            return R.ok(resultSetToJsonArray(rs).toString());
+                        }
+                    case "prepareStatement":
+                        sql = "SELECT id, username, password FROM sqli WHERE id = ?";
+                        log.info("当前执行UNION回显安全查询操作: {}", sql);
+                        try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+                            preparedStatement.setString(1, id);
+                            rs = preparedStatement.executeQuery();
+                            return R.ok(resultSetToJsonArray(rs).toString());
+                        }
+                    default:
+                        return R.error("type字段有误：传输数据异常,请检查^_^");
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.toString());
+            return R.error(e.toString());
+        }
+    }
+
+    private R queryByStoredUsername(Connection conn, String id, boolean safe) throws SQLException {
+        if (id == null || id.trim().isEmpty()) {
+            return R.error("id不能为空!");
+        }
+        String usernameSql = "SELECT username FROM sqli WHERE id = ?";
+        String storedUsername;
+        try (PreparedStatement preparedStatement = conn.prepareStatement(usernameSql)) {
+            preparedStatement.setString(1, id);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                if (!rs.next()) {
+                    return R.error("用户ID不存在!");
+                }
+                storedUsername = rs.getString("username");
+            }
+        }
+
+        if (safe) {
+            String safeSql = "SELECT id, username, password FROM sqli WHERE username = ?";
+            log.info("二次注入安全触发，参数化查询: {} 参数: {}", safeSql, storedUsername);
+            try (PreparedStatement preparedStatement = conn.prepareStatement(safeSql)) {
+                preparedStatement.setString(1, storedUsername);
+                try (ResultSet rs = preparedStatement.executeQuery()) {
+                    return R.ok(resultSetToJsonArray(rs).toString());
+                }
+            }
+        }
+
+        String vulSql = "SELECT id, username, password FROM sqli WHERE username = '" + storedUsername + "'";
+        log.info("二次注入漏洞触发，拼接查询: {}", vulSql);
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(vulSql)) {
+            return R.ok(resultSetToJsonArray(rs).toString());
+        }
+    }
+
+    private JSONArray resultSetToJsonArray(ResultSet rs) throws SQLException {
+        JSONArray jsonArray = new JSONArray();
+        while (rs.next()) {
+            JSONObject jsonObject = JSONUtil.createObj();
+            jsonObject.put("id", rs.getString("id"));
+            jsonObject.put("username", rs.getString("username"));
+            jsonObject.put("password", rs.getString("password"));
+            jsonArray.put(jsonObject);
+        }
+        return jsonArray;
     }
 
 }

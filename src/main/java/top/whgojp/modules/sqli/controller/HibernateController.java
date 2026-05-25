@@ -30,7 +30,6 @@ public class HibernateController {
 
     @Autowired(required = true)
     private HibernateTemplate hibernateTemplate;
-    String message = "";
 
     @RequestMapping("/vul1")
     @ResponseBody
@@ -57,7 +56,7 @@ public class HibernateController {
                   .append(", 密码: ").append(row[2])
                   .append("\n");
             }
-            message = sb.toString();
+            String message = sb.toString();
             log.info(message);
             return R.ok(message);
         } catch (Exception e) {
@@ -88,7 +87,7 @@ public class HibernateController {
                   .append(", 密码: ").append(sqli.getPassword())
                   .append("\n");
             }
-            message = sb.toString();
+            String message = sb.toString();
             log.info(message);
             return R.ok(message);
         } catch (Exception e) {
@@ -121,7 +120,7 @@ public class HibernateController {
                   .append(", 密码: ").append(sqli.getPassword())
                   .append("\n");
             }
-            message = sb.toString();
+            String message = sb.toString();
             log.info(message);
             return R.ok(message);
         } catch (Exception e) {

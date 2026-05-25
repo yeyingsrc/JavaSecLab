@@ -12,7 +12,9 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>  SQL注入是一种常见的Web应用程序安全漏洞，攻击者利用这种漏洞通过在输入字段中插入恶意SQL语句来执行非授权的数据库操作。这可能导致数据泄露、数据损坏或者完整性受损</pre>
+                        <pre>  SQL注入的本质是：不可信输入被拼接进SQL语法结构，导致攻击者改变原SQL语义，进而造成越权查询、数据泄露、数据篡改或破坏。</pre>
+                        <pre>  注入点不只来自输入框，也可能来自URL参数、Header、JSON字段、排序字段、分页参数以及ORM查询语句等位置。</pre>
+                        <pre>  修复优先级：参数值使用PreparedStatement/JdbcTemplate参数绑定；列名、排序方向、表名等SQL结构必须使用枚举或白名单映射。</pre>
                         <pre>  JDBC(Java Database Connectivity)是一套用于在Java程序中操作关系型数据库的API。它提供了一种标准的Java方法来连接和执行SQL查询，从而实现与数据库的交互</pre>
                         </p>
                     </blockquote>
@@ -22,7 +24,7 @@
             <div class="layui-col-md12" style="margin-top: 10px">
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-tesefuwu">  特殊场景：预编译下，order by下的sql注入问题</span></h1>
+                        <h1><span class="iconfont icon-tesefuwu">  特殊场景：ORDER BY动态结构注入</span></h1>
                         <div class="layui-tab layui-tab-brief">
                             <ul class="layui-tab-title">
                                 <li class="layui-this">拼接注入</li>
@@ -64,7 +66,7 @@
                                                 <input type="text" name="field" style="width: 150px;" required
                                                        lay-verify="required" placeholder="排序字段" autocomplete="off"
                                                        class="layui-input">
-                                                <p>预编译下 ordery by排序失效 使用默认排序</p>
+                                                <p>占位符只能绑定值，不能绑定列名，ORDER BY ? 不会按传入字段排序</p>
                                             </div>
                                             <div style="display: flex; align-items: center;">
                                                 <button class="layui-btn layui-btn-normal"
@@ -99,7 +101,11 @@
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
                                             <pre style="color: #28333e;font-size: 12px;">
-SQL语句执行顺序:
+  占位符只能绑定“值”，不能绑定列名、表名、关键字、排序方向等SQL结构。
+  ORDER BY ? 通常会把字段名当作普通值或表达式处理，不能作为动态排序字段。
+  动态排序应使用枚举映射或白名单，只允许 id、username、password 这类受控字段。
+
+  SQL语句执行顺序:
 	FROM: 指定查询的数据表，开始查询过程。
 	JOIN: 执行表的关联操作（如果有），将不同表中相关的行组合在一起。
 	WHERE: 对行进行筛选，只选择符合指定条件的行。
@@ -292,6 +298,194 @@ SQL语句执行顺序:
 
                 </div>
             </div>
+            <div class="layui-col-md12" style="margin-top: 10px">
+                <div class="layui-row layui-col-space15">
+                    <div class="layui-col-md6">
+                        <h1><span class="iconfont icon-tesefuwu">  特殊场景：二次SQL注入</span></h1>
+                        <div class="layui-tab layui-tab-brief">
+                            <ul class="layui-tab-title">
+                                <li class="layui-this">写入恶意数据</li>
+                                <li>二次查询触发</li>
+                                <li>安全查询对照</li>
+                            </ul>
+                            <div class="layui-tab-content">
+                                <div class="layui-tab-item layui-show">
+                                    <blockquote class="layui-elem-quote main_btn">
+                                        <form class="layui-form" style="display: flex; justify-content: space-between;">
+                                            <div style="display: flex; align-items: center;">
+                                                <input type="text" name="username" style="width: 220px;" required
+                                                       lay-verify="required" value="second_order' OR '1'='1" placeholder="用户名" autocomplete="off"
+                                                       class="layui-input" id="special4-SecondOrder-store-username">
+                                                <input type="text" name="password" style="width: 150px;" required
+                                                       lay-verify="required" value="second-order-demo" placeholder="密码" autocomplete="off"
+                                                       class="layui-input">
+                                            </div>
+                                            <div style="display: flex; align-items: center;">
+                                                <select class="layui-form-select"
+                                                        style="background-color: #5eb878;!important;" lay-filter="special4-SecondOrder-store-select">
+                                                    <option value="">示例Payload</option>
+                                                    <option value="second_order' OR '1'='1">布尔回显</option>
+                                                    <option value="second_order' UNION SELECT 1,database(),user()#">UNION回显</option>
+                                                </select>
+                                                <button class="layui-btn layui-btn-normal"
+                                                        style="width: 100px; margin-left: 10px;"
+                                                        lay-filter="special4-SecondOrder-store" lay-submit="">
+                                                    <span class="iconfont icon-zhihang">Run</span>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </blockquote>
+                                </div>
+                                <div class="layui-tab-item">
+                                    <blockquote class="layui-elem-quote main_btn">
+                                        <form class="layui-form" style="display: flex; justify-content: space-between;">
+                                            <div style="display: flex; align-items: center;">
+                                                <input type="text" name="id" style="width: 150px;" required
+                                                       lay-verify="required" placeholder="第一步返回的用户ID" autocomplete="off"
+                                                       class="layui-input">
+                                            </div>
+                                            <div style="display: flex; align-items: center;">
+                                                <button class="layui-btn layui-btn-normal"
+                                                        style="width: 100px; margin-left: 10px;"
+                                                        lay-filter="special4-SecondOrder-trigger" lay-submit="">
+                                                    <span class="iconfont icon-zhihang">Run</span>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </blockquote>
+                                </div>
+                                <div class="layui-tab-item">
+                                    <blockquote class="layui-elem-quote main_btn">
+                                        <form class="layui-form" style="display: flex; justify-content: space-between;">
+                                            <div style="display: flex; align-items: center;">
+                                                <input type="text" name="id" style="width: 150px;" required
+                                                       lay-verify="required" placeholder="第一步返回的用户ID" autocomplete="off"
+                                                       class="layui-input">
+                                            </div>
+                                            <div style="display: flex; align-items: center;">
+                                                <button class="layui-btn layui-btn-normal"
+                                                        style="width: 100px; margin-left: 10px;"
+                                                        lay-filter="special4-SecondOrder-safeTrigger" lay-submit="">
+                                                    <span class="iconfont icon-zhihang">Run</span>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </blockquote>
+                                </div>
+                                <div class="layui-col-md12">
+                                    <div class="layui-card">
+                                        <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
+                                        <div class="layui-card-body layui-text layadmin-text">
+                                            <pre style="color: #28333e;font-size: 12px;">  二次SQL注入的关键是“第一次入库不触发，第二次使用已存储数据拼接SQL时触发”。
+  数据库中的历史数据仍然是不可信输入；只要进入SQL语句，就必须重新按参数化或白名单规则处理。</pre>
+                                        </div>
+                                    </div>
+                                    <div class="layui-card">
+                                        <div class="layui-card-header"><i class="fa fa-warning icon-output"></i>测试结果</div>
+                                        <div class="layui-card-body layui-text layadmin-text">
+                                            <pre id="special4-SecondOrder-result"
+                                                 style="color: red;font-size: 15px;"></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layui-col-md6">
+                        <h1><span class="iconfont icon-code">  漏洞代码</span></h1>
+                        <div class="m-auto div-shadow shadow p-3 mb-5 bg-white rounded">
+                            <div class="code-editor" id="special4SecondOrder">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="layui-col-md12" style="margin-top: 10px">
+                <div class="layui-row layui-col-space15">
+                    <div class="layui-col-md6">
+                        <h1><span class="iconfont icon-tesefuwu">  特殊场景：UNION联合查询回显</span></h1>
+                        <div class="layui-tab layui-tab-brief">
+                            <ul class="layui-tab-title">
+                                <li class="layui-this">拼接注入</li>
+                                <li>参数绑定</li>
+                            </ul>
+                            <div class="layui-tab-content">
+                                <div class="layui-tab-item layui-show">
+                                    <blockquote class="layui-elem-quote main_btn">
+                                        <form class="layui-form" style="display: flex; justify-content: space-between;">
+                                            <div style="display: flex; align-items: center;">
+                                                <input type="text" name="id" style="width: 260px;" required
+                                                       lay-verify="required" value="-1 UNION SELECT 1,database(),user()" placeholder="用户ID或UNION Payload" autocomplete="off"
+                                                       class="layui-input" id="special5-Union-raw-id">
+                                            </div>
+                                            <div style="display: flex; align-items: center;">
+                                                <select class="layui-form-select"
+                                                        style="background-color: #5eb878;!important;" lay-filter="special5-Union-raw-select">
+                                                    <option value="">示例Payload</option>
+                                                    <option value="-1 UNION SELECT 1,database(),user()">数据库与当前用户</option>
+                                                    <option value="-1 UNION SELECT 1,table_name,table_schema FROM information_schema.tables WHERE table_schema=database()">当前库表名</option>
+                                                </select>
+                                                <button class="layui-btn layui-btn-normal"
+                                                        style="width: 100px; margin-left: 10px;"
+                                                        lay-filter="special5-Union-raw" lay-submit="">
+                                                    <span class="iconfont icon-zhihang">Run</span>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </blockquote>
+                                </div>
+
+                                <div class="layui-tab-item">
+                                    <blockquote class="layui-elem-quote main_btn">
+                                        <form class="layui-form" style="display: flex; justify-content: space-between;">
+                                            <div style="display: flex; align-items: center;">
+                                                <input type="text" name="id" style="width: 260px;" required
+                                                       lay-verify="required" value="-1 UNION SELECT 1,database(),user()" placeholder="用户ID或UNION Payload" autocomplete="off"
+                                                       class="layui-input" id="special5-Union-prepareStatement-id">
+                                            </div>
+                                            <div style="display: flex; align-items: center;">
+                                                <button class="layui-btn layui-btn-normal"
+                                                        style="width: 100px; margin-left: 10px;"
+                                                        lay-filter="special5-Union-prepareStatement" lay-submit="">
+                                                    <span class="iconfont icon-zhihang">Run</span>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </blockquote>
+                                </div>
+
+                                <div class="layui-col-md12">
+                                    <div class="layui-card">
+                                        <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
+                                        <div class="layui-card-body layui-text layadmin-text">
+                                            <pre style="color: #28333e;font-size: 12px;">  UNION回显要求前后SELECT列数一致、类型兼容。本场景原查询固定返回 id、username、password 三列。
+  参数绑定会把整段UNION Payload当作普通参数值，不会改变原SQL结构。</pre>
+                                        </div>
+                                    </div>
+                                    <div class="layui-card">
+                                        <div class="layui-card-header"><i class="fa fa-warning icon-output"></i>测试结果</div>
+                                        <div class="layui-card-body layui-text layadmin-text">
+                                            <pre id="special5-Union-result"
+                                                 style="color: red;font-size: 15px;"></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layui-col-md6">
+                        <h1><span class="iconfont icon-code">  漏洞代码</span></h1>
+                        <div class="m-auto div-shadow shadow p-3 mb-5 bg-white rounded">
+                            <div class="code-editor" id="special5Union">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -320,6 +514,15 @@ SQL语句执行顺序:
         common.formListenFun("special3-Limit-prepareStatement", "prepareStatement", "/sqli/jdbc/special3-Limit", "special3-Limit-result","get");
         common.selectListenFun("special3-Limit-raw-select", "special3-Limit-raw-size");
 
+        common.formListenFun("special4-SecondOrder-store", "store", "/sqli/jdbc/special4-SecondOrder", "special4-SecondOrder-result","get");
+        common.formListenFun("special4-SecondOrder-trigger", "trigger", "/sqli/jdbc/special4-SecondOrder", "special4-SecondOrder-result","get");
+        common.formListenFun("special4-SecondOrder-safeTrigger", "safeTrigger", "/sqli/jdbc/special4-SecondOrder", "special4-SecondOrder-result","get");
+        common.selectListenFun("special4-SecondOrder-store-select", "special4-SecondOrder-store-username");
+
+        common.formListenFun("special5-Union-raw", "raw", "/sqli/jdbc/special5-Union", "special5-Union-result","get");
+        common.formListenFun("special5-Union-prepareStatement", "prepareStatement", "/sqli/jdbc/special5-Union", "special5-Union-result","get");
+        common.selectListenFun("special5-Union-raw-select", "special5-Union-raw-id");
+
         var cmConfig = {
             lineNumbers: true,
             lineWrapping: false,
@@ -339,6 +542,12 @@ SQL语句执行顺序:
         }));
         CodeMirror(document.getElementById("special3Limit"), Object.assign({}, cmConfig, {
             value: special3Limit
+        }));
+        CodeMirror(document.getElementById("special4SecondOrder"), Object.assign({}, cmConfig, {
+            value: special4SecondOrder
+        }));
+        CodeMirror(document.getElementById("special5Union"), Object.assign({}, cmConfig, {
+            value: special5Union
         }));
 
 

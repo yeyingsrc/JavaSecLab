@@ -15,7 +15,9 @@ import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @description JPA SQL注入漏洞演示
@@ -35,7 +37,6 @@ public class JPAController {
 
     @PersistenceContext
     private EntityManager entityManager;
-    String message = "";
 
     @RequestMapping("/vul1")
     @ResponseBody
@@ -58,7 +59,7 @@ public class JPAController {
                         .append(", 密码: ").append(sqli.getPassword())
                         .append("\n");
             }
-            message = sb.toString();
+            String message = sb.toString();
             log.info(message);
             return R.ok(message);
         } catch (Exception e) {
@@ -68,6 +69,23 @@ public class JPAController {
         }
     }
 
+    @RequestMapping("/vul2")
+    @ResponseBody
+    @AuthIgnore
+    @ApiOperation(value = "JPA动态排序注入场景")
+    @Transactional(rollbackFor = Exception.class)
+    public R vul2(@RequestParam String orderBy) {
+        try {
+            String jpql = "SELECT s FROM Sqli s ORDER BY s." + orderBy;
+            Query query = entityManager.createQuery(jpql);
+            List<Sqli> results = query.getResultList();
+            return R.ok(formatResults(results));
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            log.error("查询失败: {}", errorMsg, e);
+            return R.error(errorMsg);
+        }
+    }
 
     @RequestMapping("/safe")
     @ResponseBody
@@ -90,7 +108,7 @@ public class JPAController {
                         .append(", 密码: ").append(sqli.getPassword())
                         .append("\n");
             }
-            message = sb.toString();
+            String message = sb.toString();
             log.info(message);
             return R.ok(message);
         } catch (Exception e) {
@@ -98,5 +116,50 @@ public class JPAController {
             log.error("查询失败: {}", errorMsg, e);
             return R.error(errorMsg);
         }
+    }
+
+    @RequestMapping("/safe-order")
+    @ResponseBody
+    @ApiOperation(value = "JPA动态排序安全场景")
+    @Transactional(rollbackFor = Exception.class)
+    public R safeOrder(@RequestParam String orderBy) {
+        try {
+            Map<String, String> orderByMap = new HashMap<>();
+            orderByMap.put("id", "id");
+            orderByMap.put("username", "username");
+            orderByMap.put("password", "password");
+
+            String safeOrderBy = orderByMap.get(orderBy);
+            if (safeOrderBy == null) {
+                return R.error("排序字段不合法");
+            }
+
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Sqli> cq = cb.createQuery(Sqli.class);
+            Root<Sqli> root = cq.from(Sqli.class);
+            cq.select(root).orderBy(cb.asc(root.get(safeOrderBy)));
+
+            List<Sqli> results = entityManager.createQuery(cq).getResultList();
+            return R.ok(formatResults(results));
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            log.error("查询失败: {}", errorMsg, e);
+            return R.error(errorMsg);
+        }
+    }
+
+    private String formatResults(List<Sqli> results) {
+        if (results == null || results.isEmpty()) {
+            return "未找到记录";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("查询成功，找到 ").append(results.size()).append(" 条记录\n");
+        for (Sqli sqli : results) {
+            sb.append("ID: ").append(sqli.getId())
+                    .append(", 用户名: ").append(sqli.getUsername())
+                    .append(", 密码: ").append(sqli.getPassword())
+                    .append("\n");
+        }
+        return sb.toString();
     }
 }

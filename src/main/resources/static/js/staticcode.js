@@ -331,7 +331,7 @@ const vul1RawJoint = "// 原生sql语句动态拼接 参数未进行任何处理
     "            conn.close();\n" +
     "            return R.ok(message);\n" +
     "        case \"delete\":\n" +
-    "            sql = \"DELETE FROM users WHERE id = '\" + id + \"'\";\n" +
+    "            sql = \"DELETE FROM sqli WHERE id = '\" + id + \"'\";\n" +
     "            rowsAffected = stmt.executeUpdate(sql);\n" +
     "            ...\n" +
     "        case \"update\":\n" +
@@ -339,7 +339,7 @@ const vul1RawJoint = "// 原生sql语句动态拼接 参数未进行任何处理
     "            rowsAffected = stmt.executeUpdate(sql);\n" +
     "            ...\n" +
     "        case \"select\":\n" +
-    "            sql = \"SELECT * FROM users WHERE id  = \" + id;\n" +
+    "            sql = \"SELECT * FROM sqli WHERE id  = \" + id;\n" +
     "            ResultSet rs = stmt.executeQuery(sql);\n" +
     "            ...\n" +
     "        }\n" +
@@ -357,7 +357,7 @@ const vul2prepareStatementJoint = "// 虽然使用了conn.prepareStatement(sql)�
     "            rowsAffected = stmt.executeUpdate(sql);\n" +
     "            ...\n" +
     "        case \"delete\":\n" +
-    "            sql = \"DELETE FROM users WHERE id = '\" + id + \"'\";\n" +
+    "            sql = \"DELETE FROM sqli WHERE id = '\" + id + \"'\";\n" +
     "            stmt = conn.prepareStatement(sql);\n" +
     "            rowsAffected = stmt.executeUpdate(sql);\n" +
     "            ...\n" +
@@ -367,7 +367,7 @@ const vul2prepareStatementJoint = "// 虽然使用了conn.prepareStatement(sql)�
     "            rowsAffected = stmt.executeUpdate(sql);\n" +
     "            ...\n" +
     "        case \"select\":\n" +
-    "            sql = \"SELECT * FROM users WHERE id  = \" + id;\n" +
+    "            sql = \"SELECT * FROM sqli WHERE id  = \" + id;\n" +
     "            stmt = conn.prepareStatement(sql);\n" +
     "            ResultSet rs = stmt.executeQuery(sql);\n" +
     "            ...\n" +
@@ -388,7 +388,7 @@ const vul3JdbcTemplateJoint = "// JDBCTemplate是Spring对JDBC的封装，底层
     "            rowsAffected = jdbctemplate.update(sql);\n" +
     "            ...\n" +
     "        case \"delete\":\n" +
-    "            sql = \"DELETE FROM users WHERE id = '\" + id + \"'\";\n" +
+    "            sql = \"DELETE FROM sqli WHERE id = '\" + id + \"'\";\n" +
     "            rowsAffected = jdbctemplate.update(sql);\n" +
     "            ...\n" +
     "        case \"update\":\n" +
@@ -396,8 +396,8 @@ const vul3JdbcTemplateJoint = "// JDBCTemplate是Spring对JDBC的封装，底层
     "            rowsAffected = jdbctemplate.update(sql);\n" +
     "            ...\n" +
     "        case \"select\":\n" +
-    "            sql = \"SELECT * FROM users WHERE id  = \" + id;\n" +
-    "            stringObjectMap = jdbctemplate.queryForMap(sql);\n" +
+    "            sql = \"SELECT * FROM sqli WHERE id  = \" + id;\n" +
+    "            resultList = jdbctemplate.queryForList(sql);\n" +
     "            ...\n" +
     "    }\n" +
     "}"
@@ -409,17 +409,17 @@ const safe1PrepareStatementParametric = "// 采用预编译的方法，使用?�
     "    switch (type) {\n" +
     "        case \"add\":\n" +
     "            // 这里可以看到使用了?占位符 sql语句和参数进行分离\n" +
-    "            sql = \"INSERT INTO users (username, password) VALUES (?, ?)\"; \n" +
+    "            sql = \"INSERT INTO sqli (username, password) VALUES (?, ?)\"; \n" +
     "            stmt = conn.prepareStatement(sql);\n" +
     "            // 参数化处理\n" +
-    "            stmt.setString(ueditor, username); \n" +
+    "            stmt.setString(1, username); \n" +
     "            stmt.setString(2, password);\n" +
     "            // 使用预编译时 不需要传递sql语句\n" +
     "            rowsAffected = stmt.executeUpdate();\n" +
     "        case \"delete\":\n" +
-    "            sql = \"DELETE FROM users WHERE id = ?\";\n" +
+    "            sql = \"DELETE FROM sqli WHERE id = ?\";\n" +
     "            stmt = conn.prepareStatement(sql);\n" +
-    "            stmt.setString(ueditor, id);\n" +
+    "            stmt.setString(1, id);\n" +
     "            rowsAffected = stmt.executeUpdate();\n" +
     "            ...\n" +
     "        case \"update\":\n" +
@@ -428,12 +428,12 @@ const safe1PrepareStatementParametric = "// 采用预编译的方法，使用?�
     "            stmt.setString(1, username);  \n" +
     "            stmt.setString(2, password);\n" +
     "            stmt.setString(3, id);\n" +
-    "            stmt.executeUpdate();\n" +
+    "            rowsAffected = stmt.executeUpdate();\n" +
     "            ...\n" +
     "        case \"select\":\n" +
-    "            sql = \"SELECT * FROM users WHERE id  = ?\";\n" +
+    "            sql = \"SELECT * FROM sqli WHERE id  = ?\";\n" +
     "            stmt = conn.prepareStatement(sql);\n" +
-    "            stmt.setString(ueditor, id);\n" +
+    "            stmt.setString(1, id);\n" +
     "            ResultSet rs = stmt.executeQuery();\n" +
     "            ...\n" +
     "   }\n" +
@@ -452,20 +452,21 @@ const safe2JdbcTemplatePrepareStatementParametric = "// JDBCTemplate预编译 �
     "            rowsAffected = jdbctemplate.update(sql, username, password);\n" +
     "            ...\n" +
     "        case \"delete\":\n" +
-    "            sql = \"DELETE FROM users WHERE id = ?\";\n" +
+    "            sql = \"DELETE FROM sqli WHERE id = ?\";\n" +
     "            rowsAffected = jdbctemplate.update(sql, id);\n" +
     "            ...\n" +
     "        case \"update\":\n" +
     "            sql = \"UPDATE sqli SET username = ?, password = ? WHERE id = ?\";\n" +
-    "            rowsAffected = jdbctemplate.update(sql, username, id);\n" +
+    "            rowsAffected = jdbctemplate.update(sql, username, password, id);\n" +
     "            ...\n" +
     "        case \"select\":\n" +
-    "            sql = \"SELECT * FROM users WHERE id  = ?\";\n" +
+    "            sql = \"SELECT * FROM sqli WHERE id  = ?\";\n" +
     "            stringObjectMap = jdbctemplate.queryForMap(sql, id);\n" +
     "            ...\n" +
     "    }\n" +
     "}\n"
-const safe3BlacklistcheckSqlBlackList = "// 检测用户输入是否存在敏感字符：'、;、--、+、,、%、=、>、<、*、(、)、and、or、exeinsert、select、delete、update、count、drop、chr、midmaster、truncate、char、declare\n" +
+const safe3BlacklistcheckSqlBlackList = "// 黑名单只能作为辅助检测或拦截，不应替代参数化查询。\n" +
+    "// 遗漏关键字、编码绕过、语法变形都可能导致绕过。\n" +
     "public R safe3(String type,String id,String username,String password) {\n" +
     "    Class.forName(\"com.mysql.cj.jdbc.Driver\");\n" +
     "    Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPass);\n" +
@@ -475,28 +476,28 @@ const safe3BlacklistcheckSqlBlackList = "// 检测用户输入是否存在敏感
     "            if (checkUserInput.checkSqlBlackList(username) || checkUserInput.checkSqlBlackList(password)) {\n" +
     "                return R.error(\"黑名单检测到非法SQL注入!\");\n" +
     "            } else {\n" +
-    "                sql = \"INSERT INTO users (username, password) VALUES ('\" + username + \"', '\" + password + \"')\";\n" +
+    "                sql = \"INSERT INTO sqli (username, password) VALUES ('\" + username + \"', '\" + password + \"')\";\n" +
     "                rowsAffected = stmt.executeUpdate(sql);\n" +
     "                ...\n" +
     "        case \"delete\":\n" +
     "            if (checkUserInput.checkSqlBlackList(id)) {\n" +
     "                return R.error(\"黑名单检测到非法SQL注入!\");\n" +
     "            } else {\n" +
-    "                sql = \"DELETE FROM users WHERE id = '\" + id + \"'\";\n" +
+    "                sql = \"DELETE FROM sqli WHERE id = '\" + id + \"'\";\n" +
     "                rowsAffected = stmt.executeUpdate(sql);\n" +
     "                ...\n" +
     "        case \"update\":\n" +
     "            if (checkUserInput.checkSqlBlackList(id) || checkUserInput.checkSqlBlackList(username) || checkUserInput.checkSqlBlackList(password)) {\n" +
     "                return R.error(\"黑名单检测到非法SQL注入!\");\n" +
     "            } else {\n" +
-    "                sql = \"UPDATE users SET password = '\" + password + \"', username = '\" + username + \"' WHERE id = '\" + id + \"'\";\n" +
+    "                sql = \"UPDATE sqli SET password = '\" + password + \"', username = '\" + username + \"' WHERE id = '\" + id + \"'\";\n" +
     "                rowsAffected = stmt.executeUpdate(sql);\n" +
     "                ...\n" +
     "        case \"select\":\n" +
     "            if (checkUserInput.checkSqlBlackList(id)) {\n" +
     "                return R.error(\"黑名单检测到非法SQL注入!\");\n" +
     "            } else {\n" +
-    "                sql = \"SELECT * FROM users WHERE id  = \" + id;\n" +
+    "                sql = \"SELECT * FROM sqli WHERE id  = \" + id;\n" +
     "                ResultSet rs = stmt.executeQuery(sql);\n" +
     "                ...\n" +
     "    }\n" +
@@ -508,46 +509,47 @@ const safe4RequestRarameterValidate = "// 强制类型转换 对用户请求参�
     "    Statement stmt = conn.createStatement();\n" +
     "    message = checkUserInput.checkUser(id);\n" +
     "    if (!message.isEmpty()) return R.error(message);\n" +
-    "    sql = \"SELECT * FROM users WHERE id  = \" + id;\n" +
+    "    sql = \"SELECT * FROM sqli WHERE id  = \" + id;\n" +
     "    ResultSet rs = stmt.executeQuery(sql);\n" +
     "    ...\n" +
     "}"
-const safe4EASAPIFilter = "// ESAPI提供了多种输入验证API，提供对XSS攻击和SQL注入攻击等的防护\n" +
-    "public R safe4(String id) {\n" +
+const safe4EASAPIFilter = "// encodeForSQL是历史方案或特定数据库Codec场景下的补充手段，不推荐作为首选修复。\n" +
+    "// SQL注入首选修复仍然是参数化查询。\n" +
+    "public R safe5(String id) {\n" +
     "    Codec<Character> oracleCodec = new OracleCodec();\n" +
     "    Class.forName(\"com.mysql.cj.jdbc.Driver\");\n" +
     "    Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPass);\n" +
     "\n" +
     "    Statement stmt = conn.createStatement();\n" +
-    "    // 使用了 Oracle 的编解码器 OracleCodec 和 ESAPI 库来对 ID 进行编码，以防止 SQL 注入攻击。\n" +
+    "    // 使用OracleCodec对ID进行SQL编码，仅作为特定场景补充。\n" +
     "    String sql = \"select * from sqli where id = '\" + ESAPI.encoder().encodeForSQL(oracleCodec, id) + \"'\";\n" +
     "    // String sql = \"select * from sqli where id = '\" + id + \"'\";\n" +
-    "    String sql = \"select * from users where id = '\" + id + \"'\";\n" +
     "    ResultSet rs = stmt.executeQuery(sql);\n" +
     "}"
-const special1OrderBy = "// ORDER BY关键字用于按升序或降序对结果集进行排序。 由于order by后面需要紧跟column_name，而预编译是参数化字符串，而order by后面紧跟字符串就会不支持原有功能 使用默认排序，因此通常防御order by注入需要使用白名单的方式\n" +
+const special1OrderBy = "// 占位符只能绑定“值”，不能绑定列名、表名、关键字、排序方向等SQL结构。\n" +
+    "// ORDER BY动态字段应使用枚举映射或白名单。\n" +
     "public R special1OrderBy(String type,String field) {\n" +
     "    Class.forName(\"com.mysql.cj.jdbc.Driver\");\n" +
     "    Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPass);\n" +
     "    PreparedStatement preparedStatement;\n" +
     "    switch (type) {\n" +
     "        case \"raw\":\n" +
-    "            sql = \"SELECT * FROM users ORDER BY \" + field;\n" +
+    "            sql = \"SELECT * FROM sqli ORDER BY \" + field;\n" +
     "            preparedStatement = conn.prepareStatement(sql);\n" +
     "            rs = preparedStatement.executeQuery();\n" +
     "            ...\n" +
     "        case \"prepareStatement\":\n" +
-    "            // 可以测试下 预编译没有报错 不过插入语句不生效 默认使用主键升序\n" +
-    "            sql = \"select * from users order by ?\";\n" +
+    "            // ORDER BY ? 会把字段名当作普通值或表达式处理，不会按传入字段排序。\n" +
+    "            sql = \"select * from sqli order by ?\";\n" +
     "            preparedStatement = conn.prepareStatement(sql);\n" +
-    "            preparedStatement.setString(ueditor, field);\n" +
+    "            preparedStatement.setString(1, field);\n" +
     "            rs = preparedStatement.executeQuery();\n" +
     "            ...\n" +
     "        case \"writeList\":\n" +
-    "            sql = \"SELECT * FROM users ORDER BY \" + field;\n" +
-    "            if (checkUserInput.chechSqlWhiteList(field)) {\n" +
+    "            if (!checkUserInput.checkSqlWhiteList(field)) {\n" +
     "                return R.error(\"field字段不合法！\");\n" +
     "            }\n" +
+    "            sql = \"SELECT * FROM sqli ORDER BY \" + field;\n" +
     "            preparedStatement = conn.prepareStatement(sql);\n" +
     "            rs = preparedStatement.executeQuery();\n" +
     "   }\n" +
@@ -595,11 +597,52 @@ const special3Limit = "public R special3Limit(String type,String size) {\n" +
     "        case \"prepareStatement\":\n" +
     "            sql = \"SELECT * FROM sqli ORDER BY id DESC LIMIT ?\";\n" +
     "            preparedStatement = conn.prepareStatement(sql);\n" +
-    "            preparedStatement.setString(1, size);\n" +
+    "            preparedStatement.setInt(1, Integer.parseInt(size));\n" +
     "            rs = preparedStatement.executeQuery();\n" +
     "            ...\n" +
     "    }\n" +
     "}"
+const special4SecondOrder = "// 第一步：参数化写入恶意数据，此时不触发SQL注入。\n" +
+    "public R special4SecondOrder(String type,String id,String username,String password) {\n" +
+    "    switch (type) {\n" +
+    "        case \"store\":\n" +
+    "            String insertSql = \"INSERT INTO sqli (username, password) VALUES (?, ?)\";\n" +
+    "            PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);\n" +
+    "            ps.setString(1, username);\n" +
+    "            ps.setString(2, password);\n" +
+    "            ps.executeUpdate();\n" +
+    "            ...\n" +
+    "        case \"trigger\":\n" +
+    "            // 第二步：先通过ID取出已存储的username。\n" +
+    "            String storedUsername = queryUsernameById(id);\n" +
+    "            // 漏洞点：数据库中的历史数据再次被拼接进SQL结构。\n" +
+    "            String vulSql = \"SELECT id, username, password FROM sqli WHERE username = '\" + storedUsername + \"'\";\n" +
+    "            ResultSet rs = stmt.executeQuery(vulSql);\n" +
+    "            ...\n" +
+    "        case \"safeTrigger\":\n" +
+    "            String safeSql = \"SELECT id, username, password FROM sqli WHERE username = ?\";\n" +
+    "            PreparedStatement safePs = conn.prepareStatement(safeSql);\n" +
+    "            safePs.setString(1, storedUsername);\n" +
+    "            ResultSet safeRs = safePs.executeQuery();\n" +
+    "            ...\n" +
+    "    }\n" +
+    "}\n"
+const special5Union = "// UNION回显要求原查询与联合查询列数一致、类型兼容。\n" +
+    "public R special5Union(String type,String id) {\n" +
+    "    switch (type) {\n" +
+    "        case \"raw\":\n" +
+    "            String sql = \"SELECT id, username, password FROM sqli WHERE id = \" + id;\n" +
+    "            // 示例：id = -1 UNION SELECT 1,database(),user()\n" +
+    "            ResultSet rs = stmt.executeQuery(sql);\n" +
+    "            ...\n" +
+    "        case \"prepareStatement\":\n" +
+    "            String safeSql = \"SELECT id, username, password FROM sqli WHERE id = ?\";\n" +
+    "            PreparedStatement ps = conn.prepareStatement(safeSql);\n" +
+    "            ps.setString(1, id);\n" +
+    "            ResultSet safeRs = ps.executeQuery();\n" +
+    "            ...\n" +
+    "    }\n" +
+    "}\n"
 
 // MyBatis
 const vul1CustomMethod = "vul1CustomMethod"
@@ -657,6 +700,9 @@ const mybatisSpecial1OrderBy =
     "          sqlis = sqliService.orderByPrepareStatement(field);\n" +
     "          break;\n" +
     "      case \"writeList\":\n" +
+    "          if (!checkUserInput.checkSqlWhiteList(field)) {\n" +
+    "              return R.error(\"field字段不合法！\");\n" +
+    "          }\n" +
     "          sqlis = sqliService.orderByWriteList(field);\n" +
     "      ...\n" +
     "// Service层\n" +
@@ -674,21 +720,21 @@ const mybatisSpecial1OrderBy =
     "    return sqliMapper.orderByWriteList(field);\n" +
     "}\n" +
     "// Mapper层\n" +
-    "<!--    Order by下的${}拼接注入问题-->\n" +
+    "<!--    Order by下的${}拼接注入问题：${}只能用于白名单枚举后的受控SQL结构-->\n" +
     "<select id=\"orderByVul\" resultType=\"top.whgojp.modules.sqli.entity.Sqli\">\n" +
     "    SELECT * FROM sqli\n" +
     "    <if test=\"field != null and field != ''\">\n" +
     "        ORDER BY ${field}\n" +
     "    </if>\n" +
     "</select>\n" +
-    "<!--    Order by下的#{}写法 排序不生效-->\n" +
+    "<!--    Order by下的#{}写法：#{}只能绑定值，不能绑定列名，所以排序不生效-->\n" +
     "<select id=\"orderByPrepareStatement\" resultType=\"top.whgojp.modules.sqli.entity.Sqli\">\n" +
     "    SELECT * FROM sqli\n" +
     "    <if test=\"field != null and field != ''\">\n" +
     "        ORDER BY #{field}\n" +
     "    </if>\n" +
     "</select>\n" +
-    "<!--    Order by下的安全写法 白名单-->\n" +
+    "<!--    Order by下的安全写法：列名先做白名单枚举，再进入${}拼接受控SQL结构-->\n" +
     "<select id=\"orderByWriteList\" resultType=\"top.whgojp.modules.sqli.entity.Sqli\">\n" +
     "    SELECT * FROM sqli\n" +
     "    <if test=\"field != null and field != ''\">\n" +
@@ -746,8 +792,11 @@ const mybatisSpecial3In = "// Controller层\n" +
     "          sqlis = sqliService.inPrepareStatement(scope);\n" +
     "          break;\n" +
     "      case \"Foreach\":\n" +
-    "\n" +
-    "          sqlis = sqliService.inSafeForeach(parseInputToList(scope));\n" +
+    "          List<Integer> idList = parseInputToList(scope);\n" +
+    "          if (idList.isEmpty()) {\n" +
+    "              return R.error(\"scope中没有合法整数ID!\");\n" +
+    "          }\n" +
+    "          sqlis = sqliService.inSafeForeach(idList);\n" +
     "          break;\n" +
     "  ...\n" +
     "// Service层\n" +
@@ -799,14 +848,18 @@ const anyFileUploadCode = "// 原生漏洞场景，未做任何限制\n" +
     "}\n" +
     "// uploadFile方法详见文件上传导致XSS模块\n"
 const anyFileUploadWhiteCode = "// 检测文件后缀，做白名单过滤\n" +
+    "String suffix = FilenameUtils.getExtension(file.getOriginalFilename());\n" +
     "if (!checkUserInput.checkFileSuffixWhiteList(suffix)){\n" +
     "    return R.error(\"只能上传图片哦！\");\n" +
     "}\n" +
     "\n" +
     "public boolean checkFileSuffixWhiteList(String suffix) {\n" +
+    "    if (suffix == null || suffix.isEmpty()) {\n" +
+    "        return false;\n" +
+    "    }\n" +
     "    String[] white_list = {\"jpg\", \"png\", \"gif\",\"jpeg\",\"bmp\",\"ico\"};\n" +
     "    for (String s : white_list) {\n" +
-    "        if (suffix.toLowerCase().contains(s)) {\n" +
+    "        if (suffix.equalsIgnoreCase(s)) {\n" +
     "            return true;\n" +
     "        }\n" +
     "    }\n" +
@@ -874,7 +927,18 @@ const vul1JpaJpql = "public R vul1(@RequestParam String username) {\n" +
     "        return R.error(errorMsg);\n" +
     "    }\n" +
     "}"
-const vul2JpaSort = "vul2JpaSort"
+const vul2JpaSort = "public R vul2(@RequestParam String orderBy) {\n" +
+    "    try {\n" +
+    "        String jpql = \"SELECT s FROM Sqli s ORDER BY s.\" + orderBy;\n" +
+    "        Query query = entityManager.createQuery(jpql);\n" +
+    "        List<Sqli> results = query.getResultList();\n" +
+    "        return R.ok(formatResults(results));\n" +
+    "    } catch (Exception e) {\n" +
+    "        String errorMsg = e.getMessage();\n" +
+    "        log.error(\"查询失败: {}\", errorMsg, e);\n" +
+    "        return R.error(errorMsg);\n" +
+    "    }\n" +
+    "}"
 const safeJpaParam = "public R safe(@RequestParam String username) {\n" +
     "    try {\n" +
     "        String jpql = \"SELECT s FROM Sqli s WHERE s.username = :username\";\n" +
@@ -889,6 +953,31 @@ const safeJpaParam = "public R safe(@RequestParam String username) {\n" +
     "        message = sb.toString();\n" +
     "        log.info(message);\n" +
     "        return R.ok(message);\n" +
+    "    } catch (Exception e) {\n" +
+    "        String errorMsg = e.getMessage();\n" +
+    "        log.error(\"查询失败: {}\", errorMsg, e);\n" +
+    "        return R.error(errorMsg);\n" +
+    "    }\n" +
+    "}"
+const safeJpaSort = "public R safeOrder(@RequestParam String orderBy) {\n" +
+    "    try {\n" +
+    "        Map<String, String> orderByMap = new HashMap<>();\n" +
+    "        orderByMap.put(\"id\", \"id\");\n" +
+    "        orderByMap.put(\"username\", \"username\");\n" +
+    "        orderByMap.put(\"password\", \"password\");\n" +
+    "\n" +
+    "        String safeOrderBy = orderByMap.get(orderBy);\n" +
+    "        if (safeOrderBy == null) {\n" +
+    "            return R.error(\"排序字段不合法\");\n" +
+    "        }\n" +
+    "\n" +
+    "        CriteriaBuilder cb = entityManager.getCriteriaBuilder();\n" +
+    "        CriteriaQuery<Sqli> cq = cb.createQuery(Sqli.class);\n" +
+    "        Root<Sqli> root = cq.from(Sqli.class);\n" +
+    "        cq.select(root).orderBy(cb.asc(root.get(safeOrderBy)));\n" +
+    "\n" +
+    "        List<Sqli> results = entityManager.createQuery(cq).getResultList();\n" +
+    "        return R.ok(formatResults(results));\n" +
     "    } catch (Exception e) {\n" +
     "        String errorMsg = e.getMessage();\n" +
     "        log.error(\"查询失败: {}\", errorMsg, e);\n" +
@@ -911,12 +1000,15 @@ const deleteFile = "public String vul(String filePath) {\n" +
     "    }\n" +
     "}"
 const safeDeleteFile = "public String safe(String fileName) {\n" +
-    "    // 限制删除文件所在目录为 /static/upload/下\n" +
-    "    String baseDir = sysConstant.getUploadFolder(); \n" +
-    "    File file = new File(baseDir, fileName);\n" +
+    "    String baseDir = sysConstant.getUploadFolder();\n" +
+    "    Path basePath = Paths.get(baseDir).toRealPath();\n" +
+    "    Path filePath = basePath.resolve(fileName).normalize();\n" +
+    "    if (!filePath.startsWith(basePath)) {\n" +
+    "        return \"访问被拒绝：文件路径不合法\";\n" +
+    "    }\n" +
     "    boolean deleted = false;\n" +
-    "    if (file.exists() && file.getCanonicalPath().startsWith(new File(baseDir).getCanonicalPath())) {\n" +
-    "        deleted = file.delete();\n" +
+    "    if (Files.isRegularFile(filePath)) {\n" +
+    "        deleted = Files.deleteIfExists(filePath);\n" +
     "    }\n" +
     "    if (deleted) {\n" +
     "        return \"文件删除成功: \" + fileName;\n" +
@@ -933,7 +1025,7 @@ const readFile = "public String vul(String fileName) throws IOException {\n" +
     "    if (file.exists() && file.isFile()) {\n" +
     "        Path filePath = file.toPath();\n" +
     "        // 使用 BufferedReader 和流 API 逐行读取文件\n" +
-    "        try (var lines = Files.lines(filePath)) {\n" +
+    "        try (Stream<String> lines = Files.lines(filePath)) {\n" +
     "            return lines\n" +
     "                    .map(line -> line + \"<br/>\")\n" +
     "                    .collect(Collectors.joining());\n" +
@@ -942,15 +1034,15 @@ const readFile = "public String vul(String fileName) throws IOException {\n" +
     "        return \"当前路径：\"+currentPath+\"<br/>文件不存在或路径不正确：\" + fileName;\n" +
     "    }"
 const safeReadFile = "public String safe(String fileName) throws IOException {\n" +
-    "    String baseDir = sysConstant.getUploadFolder(); \n" +
-    "    Path filePath = Paths.get(baseDir, fileName).normalize(); \n" +
-    "    // 确保文件路径在允许的目录中\n" +
-    "    if (!filePath.startsWith(Paths.get(baseDir))) {\n" +
+    "    String baseDir = sysConstant.getUploadFolder();\n" +
+    "    Path basePath = Paths.get(baseDir).toRealPath();\n" +
+    "    Path filePath = basePath.resolve(fileName).normalize();\n" +
+    "    // 先标准化路径，再确认目标文件仍位于允许目录内\n" +
+    "    if (!filePath.startsWith(basePath)) {\n" +
     "        return \"访问被拒绝：文件路径不合法\";\n" +
     "    }\n" +
-    "    File file = filePath.toFile();\n" +
-    "    if (file.exists() && file.isFile()) {\n" +
-    "        return new String(Files.readAllBytes(file.toPath()));\n" +
+    "    if (Files.isRegularFile(filePath)) {\n" +
+    "        return new String(Files.readAllBytes(filePath));\n" +
     "    } else {\n" +
     "        return \"文件不存在或路径不正确：\" + fileName;\n" +
     "    }\n" +
@@ -977,13 +1069,14 @@ const safeDownloadFile = 'public void safe(String fileName,HttpServletResponse r
     '    if (!isValidFileName(fileName)) {\n' +
     '        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "非法文件名：" + fileName);\n' +
     '        return;\n' +
-    '        }\n' +
-    '    File file = new File(baseDir, fileName);\n' +
+    '    }\n' +
+    '    Path basePath = Paths.get(baseDir).toRealPath();\n' +
+    '    Path filePath = basePath.resolve(fileName).normalize();\n' +
     '\n' +
-    '    if (file.exists() && file.isFile()) {\n' +
+    '    if (filePath.startsWith(basePath) && Files.isRegularFile(filePath)) {\n' +
     '        response.setContentType("application/octet-stream");\n' +
-    '        response.setHeader("Content-Disposition", "attachment; filename=\\"" + file.getName() + "\\"");\n' +
-    '        try (FileInputStream fis = new FileInputStream(file);\n' +
+    '        response.setHeader("Content-Disposition", "attachment; filename=\\"" + filePath.getFileName().toString() + "\\"");\n' +
+    '        try (InputStream fis = Files.newInputStream(filePath);\n' +
     '             OutputStream os = response.getOutputStream()) {\n' +
     '            StreamUtils.copy(fis, os);\n' +
     '            os.flush();\n' +
@@ -1019,24 +1112,53 @@ const safe1WhiteList = "public String safe(String url) {\n" +
     "    } else if (!checkUserInput.ssrfWhiteList(url)) {\n" +
     "        return \"非白名单域名！\";\n" +
     "    } else {\n" +
+    "        URL u = new URL(url);\n" +
+    "        HttpURLConnection conn = (HttpURLConnection) u.openConnection();\n" +
+    "        // 禁止自动跳转，每一跳都应重新校验协议、域名和IP\n" +
+    "        conn.setInstanceFollowRedirects(false);\n" +
+    "        conn.setConnectTimeout(3000);\n" +
+    "        conn.setReadTimeout(3000);\n" +
     "        ...\n" +
     "    }\n" +
     "}\n" +
-    "// ssrf：判断http(s)协议\n" +
+    "// SSRF：判断http(s)协议，避免 startsWith 被空白、大小写、畸形URL等绕过\n" +
     "public boolean isHttp(String url){\n" +
-    "    return url.startsWith(\"http://\") || url.startsWith(\"https://\");\n" +
+    "    try {\n" +
+    "        URI uri = new URI(url);\n" +
+    "        String scheme = uri.getScheme();\n" +
+    "        return \"http\".equalsIgnoreCase(scheme) || \"https\".equalsIgnoreCase(scheme);\n" +
+    "    } catch (URISyntaxException e) {\n" +
+    "        return false;\n" +
+    "    }\n" +
     "}\n" +
-    "// ssrf：请求域名白名单\n" +
+    "// SSRF：请求域名白名单，同时校验解析后的IP\n" +
     "public boolean ssrfWhiteList(String url) {\n" +
     "    List<String> urlList = new ArrayList<>(Arrays.asList(\"baidu.com\", \"www.baidu.com\", \"whgojp.top\"));\n" +
     "    try {\n" +
-    "        URI uri = new URI(url.toLowerCase());\n" +
+    "        URI uri = new URI(url);\n" +
     "        String host = uri.getHost();\n" +
-    "        return urlList.contains(host);\n" +
-    "    } catch (URISyntaxException e) {\n" +
+    "        if (host == null || uri.getUserInfo() != null) {\n" +
+    "            return false;\n" +
+    "        }\n" +
+    "        return urlList.contains(host.toLowerCase(Locale.ROOT)) && !isInternalHost(host);\n" +
+    "    } catch (URISyntaxException | UnknownHostException e) {\n" +
     "        System.out.println(e);\n" +
     "        return false;\n" +
     "    }\n" +
+    "}\n" +
+    "\n" +
+    "private boolean isInternalHost(String host) throws UnknownHostException {\n" +
+    "    InetAddress[] addresses = InetAddress.getAllByName(host);\n" +
+    "    for (InetAddress address : addresses) {\n" +
+    "        if (address.isAnyLocalAddress()\n" +
+    "                || address.isLoopbackAddress()\n" +
+    "                || address.isLinkLocalAddress()\n" +
+    "                || address.isSiteLocalAddress()\n" +
+    "                || address.isMulticastAddress()) {\n" +
+    "            return true;\n" +
+    "        }\n" +
+    "    }\n" +
+    "    return false;\n" +
     "}"
 
 // RCE
@@ -1086,13 +1208,33 @@ const vulProcessImpl = "public R vul3(String payload) throws Exception {\n" +
     "        return R.ok(output.toString());\n" +
     "    }\n" +
     "}"
-const safeProcessBuilder = "// 验证命令是否在允许的列表中\n" +
-    "if (!ALLOWED_COMMANDS.contains(payload)) {\n" +
-    "    return R.error(\"不允许执行该命令！\");\n" +
+const safeProcessBuilder = "// 业务动作到固定命令参数的映射，用户不能直接控制命令字符串\n" +
+    "private static final Map<String, List<String>> ALLOWED_COMMANDS = new HashMap<>();\n" +
+    "static {\n" +
+    "    ALLOWED_COMMANDS.put(\"list\", Arrays.asList(\"ls\"));\n" +
+    "    ALLOWED_COMMANDS.put(\"date\", Arrays.asList(\"date\"));\n" +
     "}\n" +
     "\n" +
-    "// 可执行命令白名单\n" +
-    "private static final List<String> ALLOWED_COMMANDS = Arrays.asList(\"ls\", \"date\");"
+    "public R safe(String payload) throws IOException {\n" +
+    "    List<String> command = ALLOWED_COMMANDS.get(payload);\n" +
+    "    if (command == null) {\n" +
+    "        return R.error(\"不允许执行该动作！\");\n" +
+    "    }\n" +
+    "    ProcessBuilder pb = new ProcessBuilder(command);\n" +
+    "    pb.redirectErrorStream(true);\n" +
+    "    Process process = pb.start();\n" +
+    "    String output = readProcessOutput(process);\n" +
+    "    try {\n" +
+    "        if (!process.waitFor(3, TimeUnit.SECONDS)) {\n" +
+    "            process.destroyForcibly();\n" +
+    "            return R.error(\"命令执行超时！\");\n" +
+    "        }\n" +
+    "    } catch (InterruptedException e) {\n" +
+    "        Thread.currentThread().interrupt();\n" +
+    "        return R.error(\"命令执行被中断！\");\n" +
+    "    }\n" +
+    "    return R.ok(output);\n" +
+    "}"
 
 const vulGroovy = "public R vulGroovy(String payload) {\n" +
     "    try {\n" +
@@ -1122,30 +1264,16 @@ const vulGroovy = "public R vulGroovy(String payload) {\n" +
     "    return output.toString();\n" +
     "}"
 const safeGroovy = 'public R safeGroovy(String payload) {\n' +
-    '    List<String> trustedScripts = Arrays.asList(\n' +
-    '            "\\"id\\".execute()",\n' +
-    '            "\\"ls\\".execute()",\n' +
-    '            "\\"whoami\\".execute()"\n' +
-    '    );\n' +
-    '    if (!isTrustedScript(payload, trustedScripts)) {\n' +
-    '        return R.error("非法的脚本输入！");\n' +
+    '    if ("hello".equals(payload)) {\n' +
+    '        return R.ok("[+] 受控动作执行结果：Hello JavaSecLab");\n' +
     '    }\n' +
-    '    try {\n' +
-    '        GroovyShell shell = new GroovyShell();\n' +
-    '        Object result = shell.evaluate(payload);  \n' +
-    '        if (result instanceof Process) {\n' +
-    '            Process process = (Process) result;\n' +
-    '            String output = getProcessOutput(process);\n' +
-    '            return R.ok("[+] 执行受信任的脚本，结果：" + output);\n' +
-    '        } else {\n' +
-    '            return R.ok("[+] 执行受信任的脚本，结果：" + result.toString());\n' +
-    '        }\n' +
-    '    } catch (Exception e) {\n' +
-    '        return R.error(e.getMessage());\n' +
+    '    if ("time".equals(payload)) {\n' +
+    '        return R.ok("[+] 受控动作执行结果：" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));\n' +
     '    }\n' +
-    '}\n' +
-    'private boolean isTrustedScript(String script, List<String> trustedScripts) {\n' +
-    '    return trustedScripts.contains(script);\n' +
+    '    if ("sum".equals(payload)) {\n' +
+    '        return R.ok("[+] 受控动作执行结果：" + (1 + 2 + 3));\n' +
+    '    }\n' +
+    '    return R.error("非法的动作输入！");\n' +
     '}'
 
 // XXE
@@ -1191,6 +1319,8 @@ const safeXMLReader = "public String safe1(String payload) {\n" +
     "        xmlReader.setFeature(\"http://apache.org/xml/features/disallow-doctype-decl\", true);\n" +
     "        xmlReader.setFeature(\"http://xml.org/sax/features/external-general-entities\", false);\n" +
     "        xmlReader.setFeature(\"http://xml.org/sax/features/external-parameter-entities\", false);\n" +
+    "        xmlReader.setFeature(\"http://apache.org/xml/features/nonvalidating/load-external-dtd\", false);\n" +
+    "        xmlReader.setEntityResolver((publicId, systemId) -> new InputSource(new StringReader(\"\")));\n" +
     "         ...\n" +
     "        xmlReader.parse(new InputSource(new StringReader(payload)));\n" +
     "        return stringWriter.toString();\n" +
@@ -1198,7 +1328,8 @@ const safeXMLReader = "public String safe1(String payload) {\n" +
     "        return e.getMessage();\n" +
     "    }\n" +
     "}"
-const safeBlackList = "public String safe2(String payload) {\n" +
+const safeBlackList = "// 黑名单只能作为辅助检测，不应替代解析器安全配置\n" +
+    "public String safe2(String payload) {\n" +
     "    String[] black_list = {\"ENTITY\", \"DOCTYPE\"};\n" +
     "    for (String keyword : black_list) {\n" +
     "        if (payload.toUpperCase().contains(keyword)) {\n" +
@@ -1578,7 +1709,7 @@ const safeCsrfToken = "public Map<String, Object> safeCsrf(String receiver,Strin
     "\n" +
     "    String sessionToken = (String) session.getAttribute(\"csrfToken\");\n" +
     "    Map<String, Object> result = new HashMap<>();\n" +
-    "    if (!csrfToken.equals(sessionToken)) {\n" +
+    "    if (!constantTimeEquals(csrfToken, sessionToken)) {\n" +
     "        result.put(\"success\", false);\n" +
     "        result.put(\"message\", \"Token失效！\");\n" +
     "        return result;\n" +
@@ -1588,25 +1719,53 @@ const safeCsrfToken = "public Map<String, Object> safeCsrf(String receiver,Strin
     "    result.put(\"amount\", amount);\n" +
     "    result.put(\"csrfToken\", csrfToken);\n" +
     "    return result;\n" +
+    "}\n" +
+    "\n" +
+    "private boolean constantTimeEquals(String requestToken, String sessionToken) {\n" +
+    "    if (requestToken == null || sessionToken == null) {\n" +
+    "        return false;\n" +
+    "    }\n" +
+    "    return MessageDigest.isEqual(\n" +
+    "            requestToken.getBytes(StandardCharsets.UTF_8),\n" +
+    "            sessionToken.getBytes(StandardCharsets.UTF_8)\n" +
+    "    );\n" +
     "}"
 const safeCsrfReferer = "public Map<String, Object> safe2(HttpServletRequest request,String receiver,String amount, @AuthenticationPrincipal UserDetails userDetails, HttpSession session) {\n" +
     "    String currentUser = userDetails.getUsername();\n" +
     "    Map<String, Object> result = new HashMap<>();\n" +
-    "    String referer = request.getHeader(\"referer\");\n" +
-    "    if (referer == null || !referer.startsWith(\"http://127.0.0.1\")) {\n" +
+    "    String originOrReferer = request.getHeader(\"Origin\");\n" +
+    "    if (originOrReferer == null) {\n" +
+    "        originOrReferer = request.getHeader(\"Referer\");\n" +
+    "    }\n" +
+    "    if (!isTrustedSameOrigin(request, originOrReferer)) {\n" +
     "        result.put(\"success\", false);\n" +
-    "        result.put(\"message\", \"referer无效！\");\n" +
+    "        result.put(\"message\", \"Origin/Referer无效！\");\n" +
     "        return result;\n" +
     "    }\n" +
     "    result.put(\"currentUser\", currentUser);\n" +
     "    result.put(\"receiver\", receiver);\n" +
     "    result.put(\"amount\", amount);\n" +
     "    return result;\n" +
+    "}\n" +
+    "\n" +
+    "private boolean isTrustedSameOrigin(HttpServletRequest request, String originOrReferer) {\n" +
+    "    if (originOrReferer == null) {\n" +
+    "        return false;\n" +
+    "    }\n" +
+    "    try {\n" +
+    "        URI uri = new URI(originOrReferer);\n" +
+    "        int actualPort = uri.getPort() == -1 ? defaultPort(uri.getScheme()) : uri.getPort();\n" +
+    "        return request.getScheme().equalsIgnoreCase(uri.getScheme())\n" +
+    "                && request.getServerName().equalsIgnoreCase(uri.getHost())\n" +
+    "                && request.getServerPort() == actualPort;\n" +
+    "    } catch (URISyntaxException e) {\n" +
+    "        return false;\n" +
+    "    }\n" +
     "}"
 
 // 跨域安全问题
-const vulCORS = "public String vul(HttpServletRequest request, HttpServletResponse response) {\n" +
-    "    String origin = request.getHeader(\"origin\");\n" +
+const vulCORS = "public R vul(HttpServletRequest request, HttpServletResponse response) {\n" +
+    "    String origin = request.getHeader(\"Origin\");\n" +
     "\n" +
     "    if (origin != null) {\n" +
     "        response.setHeader(\"Access-Control-Allow-Origin\", origin);\n" +
@@ -1617,21 +1776,37 @@ const vulCORS = "public String vul(HttpServletRequest request, HttpServletRespon
     "    // 允许携带 Cookie 或其他凭证\n" +
     "    response.setHeader(\"Access-Control-Allow-Credentials\", \"true\");\n" +
     "    response.setHeader(\"Access-Control-Allow-Methods\", \"GET, POST, PUT, DELETE, OPTIONS\");\n" +
+    "    response.setHeader(\"Access-Control-Allow-Headers\", \"Content-Type, Authorization, X-Requested-With\");\n" +
+    "    response.setHeader(\"Vary\", \"Origin\");\n" +
     "\n" +
-    "    return \"CORS漏洞演示：username:admin,password:Admin123\";\n" +
+    "    return R.ok(\"CORS漏洞演示：username:admin,password:Admin123\");\n" +
     "}"
 
-const safeCORS = "@CrossOrigin(origins = {\"http://127.0.0.1:8080\", \"https://127.0.0.1:8080\"}, allowCredentials = \"true\")\n" +
-    "public String safe(HttpServletRequest request, HttpServletResponse response) {\n" +
-    "    // 记录安全 CORS 请求来源\n" +
-    "    String origin = request.getHeader(\"origin\");\n" +
-    "    // 允许携带凭证，但前提是 `Access-Control-Allow-Origin` 与可信来源匹配\n" +
-    "    response.setHeader(\"Access-Control-Allow-Credentials\", \"true\");\n" +
+const safeCORS = "private static final Set<String> TRUSTED_ORIGINS = new HashSet<>(Arrays.asList(\n" +
+    "        \"http://127.0.0.1:8080\",\n" +
+    "        \"https://127.0.0.1:8080\"\n" +
+    "));\n" +
     "\n" +
-    "    return \"配置CORS可信源白名单\";\n" +
+    "public R safe(HttpServletRequest request, HttpServletResponse response) {\n" +
+    "    String origin = request.getHeader(\"Origin\");\n" +
+    "    response.setHeader(\"Vary\", \"Origin\");\n" +
+    "    if (origin == null) {\n" +
+    "        return R.ok(\"同源请求不需要CORS响应头\");\n" +
+    "    }\n" +
+    "    if (!TRUSTED_ORIGINS.contains(origin)) {\n" +
+    "        response.setHeader(\"Access-Control-Allow-Origin\", \"\");\n" +
+    "        response.setStatus(HttpServletResponse.SC_FORBIDDEN);\n" +
+    "        return R.error(HttpServletResponse.SC_FORBIDDEN, \"Origin不在CORS白名单\");\n" +
+    "    }\n" +
+    "    response.setHeader(\"Access-Control-Allow-Origin\", origin);\n" +
+    "    response.setHeader(\"Access-Control-Allow-Credentials\", \"true\");\n" +
+    "    response.setHeader(\"Access-Control-Allow-Methods\", \"GET, OPTIONS\");\n" +
+    "    response.setHeader(\"Access-Control-Allow-Headers\", \"Content-Type\");\n" +
+    "\n" +
+    "    return R.ok(\"配置CORS可信源白名单\");\n" +
     "}\n"
 
-const vulJSONP = 'public void vul(HttpServletRequest request, HttpServletResponse response) throws IOException, java.io.IOException {\n' +
+const vulJSONP = 'public void vul(HttpServletRequest request, HttpServletResponse response) throws IOException {\n' +
     '    String callback = request.getParameter("callback");\n' +
     '    String sensitiveData = "{\\"username\\":\\"admin\\",\\"password\\":\\"Admin123\\"}";\n' +
     '\n' +
@@ -1639,15 +1814,27 @@ const vulJSONP = 'public void vul(HttpServletRequest request, HttpServletRespons
     '    String jsonpResponse = callback + "(" + sensitiveData + ");";\n' +
     '\n' +
     '    // 设置响应类型为 JavaScript 脚本\n' +
-    '    response.setContentType("application/javascript");\n' +
+    '    response.setContentType("application/javascript;charset=UTF-8");\n' +
     '    response.getWriter().write(jsonpResponse);\n' +
     '}\n'
 
-const safeJSONP = "// 校验回调函数名是否合法\n" +
-    "if (callback == null || !callback.matches(\"^[a-zA-Z_$][a-zA-Z0-9_$]*$\")) {\n" +
-    "    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);\n" +
-    "    response.getWriter().write(\"Invalid callback\");\n" +
-    "    return;\n" +
+const safeJSONP = "private static final Pattern JSONP_CALLBACK_PATTERN = Pattern.compile(\n" +
+    "        \"^[A-Za-z_$][A-Za-z0-9_$]*(\\\\.[A-Za-z_$][A-Za-z0-9_$]*)*$\"\n" +
+    ");\n" +
+    "\n" +
+    "public void safe(HttpServletRequest request, HttpServletResponse response) throws IOException {\n" +
+    "    String callback = request.getParameter(\"callback\");\n" +
+    "    // 校验回调函数名是否合法\n" +
+    "    if (callback == null || !JSONP_CALLBACK_PATTERN.matcher(callback).matches()) {\n" +
+    "        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);\n" +
+    "        response.getWriter().write(\"Invalid callback\");\n" +
+    "        return;\n" +
+    "    }\n" +
+    "\n" +
+    "    String publicData = \"{\\\"message\\\":\\\"public data only\\\"}\";\n" +
+    "    response.setContentType(\"application/javascript;charset=UTF-8\");\n" +
+    "    response.setHeader(\"X-Content-Type-Options\", \"nosniff\");\n" +
+    "    response.getWriter().write(callback + \"(\" + publicData + \");\");\n" +
     "}"
 
 const vulDos = "public void vul(Integer width,Integer height,HttpServletResponse response) throws IOException {\n" +
@@ -2038,7 +2225,29 @@ const vul2Reverse = "const publicKey = `-----BEGIN PUBLIC KEY-----\n" +
     "{\"encryptedUsername\":\"iDF5BNv1zaM0V9qog0qzlUES3sCGYqmvrKiqPIvUgP5qE0pYn9XN3btW3PbRwLuySeruK2i8lem+L67w5+fFQBuRrpettLrHl8izIRp2W+nq9o9Kg/LSa3/+JynFoUHxrvQ2taNM1nustROpkBjJMbTOK52S6ZBa0quMw+wjfR1XExlzc99U1WJQfRAqj7Gsl9EPydRIh8vs4S/Nen5kf/dL3ZikfMbCUUBonRlYy6a3nWJ412P+hxRbSl80Z8aQKw9lH4+Iju80oFmQ6DuS6Ce70h88z/Va+xzXHDzM8w6h5iqQLzq3Kj/E+b/wsn6eM7v+LEC8LwLQ/t8z8tki9g==\",\n" +
     "\"encryptedPassword\":\"nDI0/PBwsFHnRRw7Z4gHZ6G8Uaq7BUjUxnTDw7bkR9nrTkoHfcDLKUddj2JS7WWbOyuwsUFce3/tXJYQWNMFQqGRtf6jXxFAlvTvBkRdsZXOIU+Abb4EqYw670xd5UTeAQ0lI5KNXtw6e/VbnXyX+STJdN2SO7FLbvZ4sM6gLQSVWLo/+pZsYxKlEUNxew2svlzDZtqKnyF12bzakWfzaWuovLnYCCEXV1oAJCErjgfoOS2wJADdgU0wE6KlFDMNjsCvONmO6KZpmJQ1GOq3MpyqySq8eyJkYG3cDSRo5nDo2YOcevOHifzMnKbrU9gh4/RUj8sxrykdqgLmzX3rhw==\"}"
 
-const vul1Credential = "vul1Credential"
+const vul1Credential = "public R generateJWT(String username, String role) {\n" +
+    "    String jwt = Jwts.builder()\n" +
+    "            .setSubject(username)\n" +
+    "            .claim(\"role\", role)\n" +
+    "            .signWith(jwtKey())\n" +
+    "            .compact();\n" +
+    "    return R.ok(jwt);\n" +
+    "}\n" +
+    "\n" +
+    "public R vul1(String jwt) {\n" +
+    "    String user = Jwts.parser()\n" +
+    "            .setSigningKey(jwtKey())\n" +
+    "            .parseClaimsJws(jwt)\n" +
+    "            .getBody()\n" +
+    "            .getSubject();\n" +
+    "    String role = Jwts.parserBuilder()\n" +
+    "            .setSigningKey(jwtKey())\n" +
+    "            .build()\n" +
+    "            .parseClaimsJws(jwt)\n" +
+    "            .getBody()\n" +
+    "            .get(\"role\", String.class);\n" +
+    "    return R.ok(\"JWT解析成功，user：\" + user + \",role：\" + role);\n" +
+    "}"
 
 const vul2Credential = "vul2Credential"
 
@@ -2352,21 +2561,24 @@ const vulShiro = "public R getShiroKey(){\n" +
     "    <artifactId>shiro-spring</artifactId>\n" +
     "    <version>1.2.4</version>\n" +
     "</dependency>"
-const JdbcDeserial = "public R vul() {\n" +
-    "    ...\n" +
-    "    Connection conn = DriverManager.getConnection(url, username, password);\n" +
-    "    String selectQuery = \"SELECT malicious_object FROM objects WHERE id = 1\";\n" +
-    "    Statement stmt = conn.createStatement();\n" +
-    "    ResultSet rs = stmt.executeQuery(selectQuery);\n" +
-    "\n" +
-    "    if (rs.next()) {\n" +
-    "        // 查询并获取恶意对象的字节数据\n" +
-    "        byte[] maliciousObjectBytes = rs.getBytes(\"malicious_object\");\n" +
-    "        // 反序列化恶意对象\n" +
-    "        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(maliciousObjectBytes);\n" +
-    "        ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);\n" +
-    "\n" +
-    "        // 触发反序列化漏洞\n" +
-    "        MaliciousObject maliciousObject = (MaliciousObject) objectInputStream.readObject();\n" +
+const JdbcDeserial = "public R jdbc() {\n" +
+    "    try (Connection conn = DriverManager.getConnection(url, username, password);\n" +
+    "         Statement stmt = conn.createStatement()) {\n" +
+    "        ResultSet rs = stmt.executeQuery(\"SELECT malicious_object FROM objects WHERE id = 1\");\n" +
+    "        if (rs.next()) {\n" +
+    "            byte[] bytes = rs.getBytes(\"malicious_object\");\n" +
+    "            try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes))) {\n" +
+    "                // 触发反序列化漏洞\n" +
+    "                ois.readObject();\n" +
+    "            }\n" +
+    "        }\n" +
+    "        return R.ok(\"触发MYSQL-JDBC反序列化漏洞！\");\n" +
+    "    } catch (Exception e) {\n" +
+    "        return R.error(\"触发MYSQL-JDBC反序列化漏洞失败：\" + e.getMessage());\n" +
     "    }\n" +
-    "    ..."
+    "}\n" +
+    "\n" +
+    "private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {\n" +
+    "    in.defaultReadObject();\n" +
+    "    Runtime.getRuntime().exec(command);\n" +
+    "}"

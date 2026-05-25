@@ -2,11 +2,14 @@ package top.whgojp.common.utils;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.HtmlUtils;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -117,9 +120,12 @@ public class CheckUserInput {
      * 文件上传白名单
      */
     public boolean checkFileSuffixWhiteList(String suffix) {
+        if (suffix == null || suffix.isEmpty()) {
+            return false;
+        }
         String[] white_list = {"jpg", "png", "gif","jpeg","bmp","ico"};
         for (String s : white_list) {
-            if (suffix.toLowerCase().contains(s)) {
+            if (suffix.equalsIgnoreCase(s)) {
                 return true;
             }
         }
@@ -151,7 +157,13 @@ public class CheckUserInput {
      * ssrf：判断http(s)协议
      */
     public boolean isHttp(String url){
-        return url.startsWith("http://") || url.startsWith("https://");
+        try {
+            URI uri = new URI(url);
+            String scheme = uri.getScheme();
+            return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);
+        } catch (URISyntaxException e) {
+            return false;
+        }
     }
     /**
      * ssrf：请求域名白名单
@@ -159,13 +171,33 @@ public class CheckUserInput {
     public boolean ssrfWhiteList(String url) {
         List<String> urlList = new ArrayList<>(Arrays.asList("baidu.com", "www.baidu.com", "whgojp.top"));
         try {
-            URI uri = new URI(url.toLowerCase());
+            URI uri = new URI(url);
             String host = uri.getHost();
-            return urlList.contains(host);
-        } catch (URISyntaxException e) {
+            if (host == null || uri.getUserInfo() != null) {
+                return false;
+            }
+            return urlList.contains(host.toLowerCase(Locale.ROOT)) && !isInternalHost(host);
+        } catch (URISyntaxException | UnknownHostException e) {
             System.out.println(e);
             return false;
         }
+    }
+
+    /**
+     * SSRF：解析域名后的所有IP都不能落入内网、回环、链路本地等地址段。
+     */
+    private boolean isInternalHost(String host) throws UnknownHostException {
+        InetAddress[] addresses = InetAddress.getAllByName(host);
+        for (InetAddress address : addresses) {
+            if (address.isAnyLocalAddress()
+                    || address.isLoopbackAddress()
+                    || address.isLinkLocalAddress()
+                    || address.isSiteLocalAddress()
+                    || address.isMulticastAddress()) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
