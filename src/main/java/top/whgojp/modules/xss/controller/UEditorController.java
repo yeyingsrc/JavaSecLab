@@ -46,14 +46,8 @@ public class UEditorController {
     public void getConfigInfo(HttpServletRequest request, HttpServletResponse response) {
         response.setContentType("application/json");
 
-        String rootPath = "";
-        // 判断当前系统是否是Windows系统
-        if (isWindowsSystem()) {
-            rootPath = ClassUtils.getDefaultClassLoader().getResource("").getPath() + "static/ueditor/jsp";
-        } else {
-            // 将config.json文件放在jar包同级目录下
-            rootPath = "/Users/whgojp/Desktop/Security/JAVA/JavaSecLab/src/main/resources/static/lib/ueditor/jsp";
-        }
+        String rootPath = Objects.requireNonNull(ClassUtils.getDefaultClassLoader().getResource("")).getPath()
+                + "static/lib/ueditor/jsp";
         log.info("rootPath：{}", rootPath);
         try {
             response.setCharacterEncoding("UTF-8");

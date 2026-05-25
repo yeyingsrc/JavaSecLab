@@ -409,9 +409,9 @@
                                         <div class="layui-card-body layui-text layadmin-text">
                                             <pre style="color: #28333e;font-size: 12px;">
 1. WebSocket XSS
-   - WebSocket通信不受同源策略限制，可以连接到任意域名的WebSocket服务器
+   - 浏览器会在WebSocket握手中携带Origin，但是否允许连接取决于服务端校验
    - WebSocket消息内容可能包含恶意代码，如果直接插入DOM会导致XSS
-   - 缺乏消息验证和过滤机制，攻击者可以发送任意内容
+   - 服务端缺少Origin校验、认证授权和消息内容校验时，攻击者可以发送非预期内容
 2. PostMessage XSS
    - postMessage跨域通信可能被滥用，特别是targetOrigin设置为*时
    - 接收方没有正确验证消息来源，可能处理恶意消息
@@ -449,24 +449,6 @@
 </div>
 
 <script th:replace="~{common/common::script}"></script>
-<script src="/lib/ueditor/ueditor.config.js" charset="utf-8"></script>
-<script src="/lib/ueditor/ueditor.all.min.js" charset="utf-8"></script>
-<script src="/lib/ueditor/lang/zh-cn/zh-cn.js" charset="utf-8"></script>
-<script th:inline="none">
-    UE.Editor.prototype._bkGetActionUrl = UE.Editor.prototype.getActionUrl;
-    UE.Editor.prototype.getActionUrl = function (action) {
-        if (action === 'uploadimage') {
-            return '/ueditor/upload';
-        } else {
-            return this._bkGetActionUrl.call(this, action);
-        }
-    }
-
-    var uee = UE.getEditor('ueditorContent', {
-        toolbars: [['fullscreen', 'source', '|', 'undo', 'redo', '|', 'simpleupload', 'insertimage', '|', 'drafts']]
-    });
-</script>
-
 <script>
     layui.use(['layer', 'miniTab', 'common', 'upload', 'form'], function () {
         var $ = layui.jquery,
