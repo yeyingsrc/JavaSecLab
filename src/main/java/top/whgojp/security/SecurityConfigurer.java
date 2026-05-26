@@ -3,6 +3,7 @@ package top.whgojp.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -19,7 +20,6 @@ import org.springframework.security.web.authentication.logout.LogoutSuccessHandl
 import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import top.whgojp.common.config.AuthIgnoreConfig;
 import top.whgojp.common.constant.SysConstant;
 import top.whgojp.common.filter.ValidateCodeFilter;
@@ -81,6 +81,15 @@ public class SecurityConfigurer extends WebSecurityConfigurerAdapter {
         permitAll.add("/static/js/**");
         permitAll.add("/static/css/**");
         permitAll.add("/static/other/**");
+        permitAll.add("/images/**");
+        permitAll.add("/lib/**");
+        permitAll.add("/js/**");
+        permitAll.add("/css/**");
+        permitAll.add("/api/**");
+        permitAll.add("/upload/**");
+        permitAll.add("/other/**");
+        permitAll.add("/ssrf/internal/**");
+        permitAll.add("/ssrf/redirect");
 //        permitAll.add("/druid/**");
 //        permitAll.add("/ueditor/**");
         String[] urls = permitAll.stream().distinct().toArray(String[]::new);
@@ -92,7 +101,8 @@ public class SecurityConfigurer extends WebSecurityConfigurerAdapter {
         // 权限
         http.authorizeRequests(authorize ->
                 // 开放权限
-                authorize.antMatchers(urls).permitAll()
+                authorize.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .antMatchers(urls).permitAll()
                         .anyRequest().authenticated());
 
         // 使用jwt 关闭session校验
@@ -133,15 +143,37 @@ public class SecurityConfigurer extends WebSecurityConfigurerAdapter {
     }
 
 
-    // 解决跨域
+    // 全局跨域演示配置。跨源安全模块需要由 Controller 自己控制响应头，避免被全局通配配置污染。
     public CorsConfigurationSource corsConfigurationSource() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.addAllowedOrigin("*");
-        corsConfiguration.addAllowedHeader("*");
-        corsConfiguration.addAllowedMethod("*");
-        source.registerCorsConfiguration("/**", corsConfiguration);
-        return source;
+        return request -> {
+            String uri = request.getRequestURI();
+            if (uri.startsWith("/crossorigin/corsVul")) {
+                CorsConfiguration corsConfiguration = new CorsConfiguration();
+                corsConfiguration.addAllowedOriginPattern("*");
+                corsConfiguration.setAllowCredentials(true);
+                corsConfiguration.addAllowedHeader("*");
+                corsConfiguration.addAllowedMethod("*");
+                return corsConfiguration;
+            }
+            if (uri.startsWith("/crossorigin/corsSafe")) {
+                CorsConfiguration corsConfiguration = new CorsConfiguration();
+                corsConfiguration.addAllowedOrigin("http://127.0.0.1:8080");
+                corsConfiguration.addAllowedOrigin("https://127.0.0.1:8080");
+                corsConfiguration.setAllowCredentials(true);
+                corsConfiguration.addAllowedHeader("Content-Type");
+                corsConfiguration.addAllowedMethod("GET");
+                corsConfiguration.addAllowedMethod("OPTIONS");
+                return corsConfiguration;
+            }
+            if (uri.startsWith("/crossorigin/")) {
+                return null;
+            }
+            CorsConfiguration corsConfiguration = new CorsConfiguration();
+            corsConfiguration.addAllowedOrigin("*");
+            corsConfiguration.addAllowedHeader("*");
+            corsConfiguration.addAllowedMethod("*");
+            return corsConfiguration;
+        };
     }
 
     @Bean
@@ -154,6 +186,7 @@ public class SecurityConfigurer extends WebSecurityConfigurerAdapter {
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
         CustomSavedRequestAwareAuthenticationSuccessHandler customSavedRequestAwareAuthenticationSuccessHandler = new CustomSavedRequestAwareAuthenticationSuccessHandler();
         customSavedRequestAwareAuthenticationSuccessHandler.setDefaultTargetUrl("/index");
+        customSavedRequestAwareAuthenticationSuccessHandler.setAlwaysUseDefaultTargetUrl(true);
 //        customSavedRequestAwareAuthenticationSuccessHandler.setEmailPush(emailPush);
 //        customSavedRequestAwareAuthenticationSuccessHandler.setSmsService(smsService);
 //        customSavedRequestAwareAuthenticationSuccessHandler.setWeChatService(wechatService);

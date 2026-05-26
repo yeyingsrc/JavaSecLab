@@ -10,10 +10,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import top.whgojp.common.utils.CheckUserInput;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @description SSRF-服务端请求伪造
@@ -30,6 +34,22 @@ public class SsrfController {
     @RequestMapping("")
     public String fileUpload() {
         return "vul/ssrf/ssrf";
+    }
+
+    @ApiOperation(value = "模拟内网元数据服务", notes = "用于SSRF场景演示，模拟攻击者通过服务端访问内网或云元数据接口")
+    @GetMapping("/internal/metadata")
+    @ResponseBody
+    public String internalMetadata() {
+        return "instance-id: i-javaseclab-ssrf\n"
+                + "role: internal-admin\n"
+                + "token: javaseclab-metadata-token\n"
+                + "source: 127.0.0.1";
+    }
+
+    @ApiOperation(value = "模拟跳转链路", notes = "用于演示SSRF修复时必须禁用自动跳转，或对每一跳重新校验")
+    @GetMapping("/redirect")
+    public void redirect(@RequestParam String target, HttpServletResponse response) throws IOException {
+        response.sendRedirect(target);
     }
 
     @ApiOperation(value = "漏洞场景：服务端请求伪造", notes = "原生漏洞场景，未做任何限制，可调用URLConnection发起任意请求，探测内网服务、读取文件")
@@ -70,8 +90,11 @@ public class SsrfController {
         } else {
             try {
                 URL u = new URL(url);
-                URLConnection conn = u.openConnection();    // 这里以URLConnection作为演示
-                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+                conn.setInstanceFollowRedirects(false);
+                conn.setConnectTimeout(3000);
+                conn.setReadTimeout(3000);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
                 String content;
                 StringBuilder html = new StringBuilder();
                 html.append("<pre>");

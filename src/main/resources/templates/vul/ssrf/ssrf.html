@@ -2,6 +2,50 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{common/common::head}"></head>
 <body>
+<style>
+    .ssrf-action-panel {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+        padding: 12px 16px;
+    }
+
+    .ssrf-action-panel .action-desc {
+        flex: 1 1 0;
+        margin: 0;
+        color: #28333e;
+        font-size: 14px;
+        line-height: 1.55;
+    }
+
+    .ssrf-action-panel .action-buttons {
+        flex: 0 0 auto;
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 6px;
+    }
+
+    .ssrf-action-panel .layui-btn {
+        width: 76px;
+        height: 32px;
+        margin: 0;
+        padding: 0 8px;
+        font-size: 13px;
+        line-height: 32px;
+    }
+
+    .ssrf-action-panel .iconfont {
+        font-size: 13px;
+    }
+
+    @media (max-width: 1400px) {
+        .ssrf-action-panel .action-buttons {
+            flex-wrap: nowrap;
+        }
+    }
+</style>
 <div class="layuimini-container">
     <div class="layuimini-main">
         <div class="layui-row layui-col-space15">
@@ -12,8 +56,8 @@
                     </legend>
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
-                        <pre>  服务端请求伪造：服务端提供了从其他服务器获取数据的功能，但没有对目标地址进行过滤和限制，攻击者可以传入任意URL，使服务器请求并返回数据，访问或操纵敏感资源。</pre>
-                        <pre>  漏洞场景：网络请求功能（如在线识图、文档翻译、分享、订阅等)、请求远程服务器资源（如远程URL上传、静态资源图片等）、数据库内置功能（如MongoDB的copyDatabase）、文件处理工具（如ImageMagick、XML处理）、从URL关键字（如source、share、link、src、imageurl、target）中寻找的功能</pre>
+                        <pre>  SSRF：服务端把用户可控的 URL、主机名或资源地址用于发起网络请求，且未限制协议、目标主机、解析后的 IP 和跳转链路，攻击者可借服务端网络身份访问内网服务、云元数据、管理端口、本地文件或第三方资源。</pre>
+                        <pre>  常见入口：远程图片/附件抓取、Webhook、URL 预览、文档转换、订阅源、代理下载、XML/图片处理、数据库或中间件的外连功能，以及 source、share、link、src、imageUrl、target 等参数。</pre>
                     </blockquote>
                 </fieldset>
             </div>
@@ -33,14 +77,25 @@
                         <div class="layui-tab layui-tab-brief">
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
-                                    <blockquote class="layui-elem-quote main_btn">
-                                        <p>可尝试使用file、http(s)、dict、gopher等协议进行测试</p>
-                                        <a target="_blank" href="/ssrf/vul?url=file:///etc/passwd">
-                                            <button class="layui-btn layui-btn-normal"
-                                                    style="width: 100px; margin-left: 10px;">
-                                                <span class="iconfont icon-zhihang">Run</span>
-                                            </button>
-                                        </a>
+                                    <blockquote class="layui-elem-quote main_btn ssrf-action-panel">
+                                        <p class="action-desc">可尝试使用 file、http(s)、dict、gopher 等协议进行测试</p>
+                                        <div class="action-buttons">
+                                            <a target="_blank" href="/ssrf/vul?url=file:///etc/passwd">
+                                                <button class="layui-btn layui-btn-normal">
+                                                    <span class="iconfont icon-zhihang">file</span>
+                                                </button>
+                                            </a>
+                                            <a target="_blank" href="/ssrf/vul?url=http://127.0.0.1/ssrf/internal/metadata">
+                                                <button class="layui-btn layui-btn-normal">
+                                                    <span class="iconfont icon-zhihang">内网HTTP</span>
+                                                </button>
+                                            </a>
+                                            <a target="_blank" href="/ssrf/vul?url=http://127.0.0.1/ssrf/redirect?target=http://127.0.0.1/ssrf/internal/metadata">
+                                                <button class="layui-btn layui-btn-normal">
+                                                    <span class="iconfont icon-zhihang">跳转链</span>
+                                                </button>
+                                            </a>
+                                        </div>
                                     </blockquote>
                                 </div>
 
@@ -48,9 +103,12 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">代码审计SINK点：
-    URL、HttpClient、OkHttpURLConnection、Socket、ImageIO、DriverManager.getConnection、SimpleDriverDataSource.getConnection、HttpURLConnection、RestTemplate、URLConnection、WebClient、JNDI
-Linux：file:///etc/hosts Windows：file:///C:\windows\win.ini</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">代码审计 SINK 点：
+  URL、URLConnection、HttpURLConnection、HttpClient、OkHttp、RestTemplate、WebClient、Socket、ImageIO、JNDI、DriverManager.getConnection
+  Linux：file:///etc/hosts
+  Windows：file:///C:\windows\win.ini
+  内网HTTP：http://127.0.0.1/ssrf/internal/metadata
+  跳转链：http://127.0.0.1/ssrf/redirect?target=http://127.0.0.1/ssrf/internal/metadata</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -73,18 +131,34 @@ Linux：file:///etc/hosts Windows：file:///C:\windows\win.ini</pre>
             <div class="layui-col-md12" style="margin-top: 10px">
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-anquan"> 安全场景：限制协议、白名单</span></h1>
+                        <h1><span class="iconfont icon-anquan"> 安全场景：协议、域名与 IP 校验</span></h1>
                         <div class="layui-tab layui-tab-brief">
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
-                                    <blockquote class="layui-elem-quote main_btn">
-                                        <p>限制http(s)协议、请求白名单(baidu.com、whgojp.top)</p>
-                                        <a target="_blank" href="/ssrf/safe?url=http://baidu.com">
-                                            <button class="layui-btn layui-btn-normal"
-                                                    style="width: 100px; margin-left: 10px;">
-                                                <span class="iconfont icon-zhihang">Run</span>
-                                            </button>
-                                        </a>
+                                    <blockquote class="layui-elem-quote main_btn ssrf-action-panel">
+                                        <p class="action-desc">限制 http(s) 协议、白名单域名，并校验域名解析后的 IP</p>
+                                        <div class="action-buttons">
+                                            <a target="_blank" href="/ssrf/safe?url=http://baidu.com">
+                                                <button class="layui-btn layui-btn-normal">
+                                                    <span class="iconfont icon-zhihang">白名单</span>
+                                                </button>
+                                            </a>
+                                            <a target="_blank" href="/ssrf/safe?url=file:///etc/passwd">
+                                                <button class="layui-btn layui-btn-normal">
+                                                    <span class="iconfont icon-zhihang">协议拦截</span>
+                                                </button>
+                                            </a>
+                                            <a target="_blank" href="/ssrf/safe?url=http://127.0.0.1/ssrf/internal/metadata">
+                                                <button class="layui-btn layui-btn-normal">
+                                                    <span class="iconfont icon-zhihang">内网拦截</span>
+                                                </button>
+                                            </a>
+                                            <a target="_blank" href="/ssrf/safe?url=http://127.0.0.1/ssrf/redirect?target=http://127.0.0.1/ssrf/internal/metadata">
+                                                <button class="layui-btn layui-btn-normal">
+                                                    <span class="iconfont icon-zhihang">跳转拦截</span>
+                                                </button>
+                                            </a>
+                                        </div>
                                     </blockquote>
                                 </div>
 
@@ -93,11 +167,11 @@ Linux：file:///etc/hosts Windows：file:///C:\windows\win.ini</pre>
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
                                             <pre style="color: #28333e;font-size: 15px;">安全编码建议：
-    1、URL做白名单处理，域名识别IP，过滤内网IP
-    2、校验返回的内容是否与预期一致
-    3、禁止302跳转，或每跳转一次都进行校验目的地址是否为内网地址或合法地址。
-    4、禁用高危协议：gopher、dict、file、ftp、file等，只允许http/https
-项目主要关注的是漏洞的产生与修复，关于攻击绕过手法(@等分隔符、本地回环地址、短网址、DNS重绑定、八(十六)进制)，这里就不再展开……</pre>
+  1、优先使用业务枚举或服务端映射，不直接让用户提交完整 URL。
+  2、只允许 http/https，拒绝 file、gopher、dict、ftp、jar、ldap 等高危协议。
+  3、域名白名单校验后，还要解析所有 IP 并拦截内网、回环、链路本地、组播等地址。
+  4、禁用自动 30x 跳转；如必须跟随跳转，每一跳都重新执行协议、域名和 IP 校验。
+  5、设置连接/读取超时、限制响应大小，并校验返回内容是否符合业务预期。</pre>
                                         </div>
                                     </div>
                                 </div>

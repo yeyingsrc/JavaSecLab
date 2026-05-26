@@ -1112,10 +1112,20 @@ const safeDownloadFile = 'public void safe(String fileName,HttpServletResponse r
     '}'
 
 // ssrf-服务端请求伪造
-const vul1URLConnection = "public String vul(String url) {\n" +
+const vul1URLConnection = "@GetMapping(\"/internal/metadata\")\n" +
+    "public String internalMetadata() {\n" +
+    "    return \"instance-id: i-javaseclab-ssrf ...\";\n" +
+    "}\n" +
+    "\n" +
+    "@GetMapping(\"/redirect\")\n" +
+    "public void redirect(String target, HttpServletResponse response) throws IOException {\n" +
+    "    response.sendRedirect(target);\n" +
+    "}\n" +
+    "\n" +
+    "public String vul(String url) {\n" +
     "    try {\n" +
     "        URL u = new URL(url);\n" +
-    "        // 这里以URLConnection作为演示\n" +
+    "        // URLConnection默认可请求file/http等协议，HTTP请求还可能自动跟随跳转\n" +
     "        URLConnection conn = u.openConnection();\n" +
     "        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));\n" +
     "        String content;\n" +
