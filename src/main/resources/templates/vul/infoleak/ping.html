@@ -2,14 +2,34 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>网络连通性测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; }
+        .panel { border: 1px solid #e5e7eb; padding: 16px; margin-bottom: 18px; max-width: 760px; }
+        input { width: 260px; padding: 6px; }
+        button { padding: 7px 14px; margin-left: 8px; }
+        pre { background: #f7f7f7; padding: 12px; white-space: pre-wrap; }
+    </style>
 </head>
 <body>
-<h1>Ping 测试</h1>
-<form method="get" action="/infoLeak/ceShiPage/ping">
-    <label for="ip">IP Address:</label>
-    <input value="127.0.0.1 & whoami" type="text" id="ip" name="ip">
-    <button type="submit">Ping</button>
-</form>
-<pre th:text="${result}"></pre>
+<h1>Ping 测试页面</h1>
+<div class="panel">
+    <h2>漏洞场景：命令拼接</h2>
+    <form method="get" action="/infoLeak/ceShiPage/ping">
+        <label for="ip">目标地址:</label>
+        <input value="127.0.0.1 & whoami" type="text" id="ip" name="ip">
+        <button type="submit">Ping</button>
+    </form>
+    <pre th:text="${result}"></pre>
+</div>
+
+<div class="panel">
+    <h2>安全场景：参数白名单 + ProcessBuilder参数数组</h2>
+    <form method="get" action="/infoLeak/ceShiPage/safePing">
+        <label for="safeIp">目标地址:</label>
+        <input value="127.0.0.1 & whoami" type="text" id="safeIp" name="ip">
+        <button type="submit">安全Ping</button>
+    </form>
+    <pre th:text="${safeResult}"></pre>
+</div>
 </body>
 </html>

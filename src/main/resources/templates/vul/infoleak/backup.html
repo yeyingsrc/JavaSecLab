@@ -12,7 +12,7 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>  备份文件：Web源码泄漏、日志泄漏</pre>
+                        <pre>  备份文件泄漏通常来自源码包、数据库备份、日志、临时压缩包或编辑器备份文件被放入 Web 可访问目录。攻击者可通过常见文件名、目录索引或搜索引擎发现这些文件，进一步获取源码、配置、凭证、Session、SQL日志和内部路径。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -40,7 +40,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  由于开发/运营人员疏忽，将源码的压缩包（如.zip、.tar.gz、.bak）放置在Web目录下，未做访问限制</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">源码备份常包含 pom.xml、application.yml、SQL脚本、密钥配置和业务代码。生产环境应禁止把备份文件放入静态目录，并通过部署前扫描拦截 .zip、.tar.gz、.bak、.old、.sql 等高风险文件。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -81,7 +81,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  在开发过程中，为了调试便捷，开发者常会输出一些敏感信息到日志中，例如登录信息(Session、Cookie、用户名、密码)以及SQL执行记录。这些日志内容通常会被定期打包备份，如果备份日志未妥善管理或被泄漏，攻击者可能获取其中的敏感信息，利用这些信息实施攻击。尤其是在登录时启用“记住我”功能的情况下，Cookie/Session通常会具有较长的有效期(如两周)，进一步增加了被利用的风险，最终可能导致凭证劫持</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">日志中不应输出明文密码、Token、Cookie、验证码、完整SQL参数或身份证件等敏感数据。生产日志应脱敏、分级授权、设置保留周期，并禁止通过静态目录直接访问。</pre>
                                         </div>
                                     </div>
                                 </div>

@@ -2189,15 +2189,18 @@ const safe1ListDirectory = 'public String safe1(String dir) {\n' +
     '}'
 
 const safe2ListDirectory = "public String safe2(String dir) {\n" +
-    "    String staticFolderPath = sysConstant.getStaticFolder();\n" +
-    "    File baseDir = new File(staticFolderPath);\n" +
-    "    File requestedDir = new File(baseDir, dir);\n" +
+    "    File baseDir = resolveStaticBaseDir();\n" +
+    "    String relativeDir = normalizeRelativeDir(dir);\n" +
     "\n" +
     "    // 检查请求的目录是否在规定目录内\n" +
     "try {\n" +
-    "    if (!requestedDir.getCanonicalPath().startsWith(baseDir.getCanonicalPath()) || !requestedDir.isDirectory()) {\n" +
+    "    Path basePath = baseDir.getCanonicalFile().toPath();\n" +
+    "    File requestedDir = new File(baseDir, relativeDir);\n" +
+    "    Path requestedPath = requestedDir.getCanonicalFile().toPath();\n" +
+    "    if (!requestedPath.startsWith(basePath) || !requestedDir.isDirectory()) {\n" +
     "        return \"Directory not found or access denied.\";\n" +
     "    }\n" +
+    "    return renderDirectoryListing(dir, requestedDir, true);\n" +
     "} catch (IOException e) {\n" +
     "    return \"Error resolving directory path.\";\n" +
     "}\n" +

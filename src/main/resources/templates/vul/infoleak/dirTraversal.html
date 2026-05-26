@@ -12,7 +12,7 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>  目录遍历漏洞的原因是Web应用在处理用户输入的文件路径时缺乏适当的验证和规范化，导致攻击者可以通过输入特殊字符（如../）访问到应用程序根目录之外的文件。其危害包括泄露敏感信息（如配置文件、密码文件）、读取未授权文件、执行任意代码等，严重威胁系统安全和数据隐私</pre>
+                        <pre>  目录遍历泄漏发生在目录列表、文件浏览、静态资源代理等功能中。应用把用户可控路径拼接到服务端目录后，如果没有标准化路径并校验目录边界，攻击者可通过 ../ 或编码变体浏览非预期目录，进而发现配置、备份、日志或源码文件。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -46,7 +46,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">/listdir?dir=/，可以尝试插入../从而遍历任意目录</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">可尝试 /infoLeak/dirTraversal/vul?dir=../ 观察是否能跳出预期静态目录。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -121,7 +121,7 @@
                                 <div class="layui-tab-item layui-show">
                                     <blockquote class="layui-elem-quote main_btn">
                                         <div style="display: flex; align-items: center;">
-                                            <p>检查请求的目录是否在规定的跟目录内，可以有效防止目录遍历攻击</p>
+                                            <p>检查请求的目录是否在规定的根目录内，可以有效防止目录遍历攻击</p>
                                         </div>
                                         <div style="display: flex; align-items: center;">
                                             <a target="_blank"
@@ -139,7 +139,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">将可遍历目录限制到静态文件目录内</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">先确定允许根目录，再对目标路径做 canonical/real path 校验。黑名单只能作为辅助，不能替代目录边界校验。</pre>
                                         </div>
                                     </div>
                                 </div>

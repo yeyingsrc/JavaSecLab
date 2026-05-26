@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * @description 敏感信息泄漏-测试页面
@@ -24,6 +26,8 @@ import java.io.InputStreamReader;
 @CrossOrigin(origins = "*")
 @RequestMapping("/infoLeak/ceShiPage")
 public class CeshiController {
+    private static final Pattern SAFE_HOST_PATTERN = Pattern.compile("^[A-Za-z0-9.-]{1,253}$");
+
     @RequestMapping("")
     public String CeShi() {
         return "vul/infoleak/ceshi";
@@ -55,6 +59,38 @@ public class CeshiController {
             }
         }
         model.addAttribute("result", result);
+        return "vul/infoleak/ping";
+    }
+
+    @GetMapping("/safePing")
+    public String safePing(@RequestParam(name = "ip", required = false) String ip, Model model) {
+        String result = "";
+        if (ip != null && !ip.isEmpty()) {
+            if (!SAFE_HOST_PATTERN.matcher(ip).matches() || ip.contains("..")) {
+                result = "非法目标地址";
+            } else {
+                try {
+                    Process process = new ProcessBuilder("ping", "-c", "4", ip).start();
+                    boolean finished = process.waitFor(5, TimeUnit.SECONDS);
+                    if (!finished) {
+                        process.destroyForcibly();
+                        result = "Ping执行超时";
+                    } else {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                        String line;
+                        StringBuilder output = new StringBuilder();
+                        while ((line = reader.readLine()) != null) {
+                            output.append(line).append("\n");
+                        }
+                        reader.close();
+                        result = output.toString();
+                    }
+                } catch (Exception e) {
+                    result = "Error: " + e.getMessage();
+                }
+            }
+        }
+        model.addAttribute("safeResult", result);
         return "vul/infoleak/ping";
     }
 
