@@ -15,9 +15,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @description RCE - 命令注入
@@ -31,6 +34,14 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 @RequestMapping("/command")
 public class CommandController {
+    // 业务动作到固定命令参数的映射。用户只能选择动作，不能直接控制命令字符串。
+    private static final Map<String, List<String>> ALLOWED_COMMANDS = new HashMap<>();
+
+    static {
+        ALLOWED_COMMANDS.put("list", Arrays.asList("ls"));
+        ALLOWED_COMMANDS.put("date", Arrays.asList("date"));
+    }
+
     @RequestMapping("")
     public String spel() {
         return "vul/rce/command";
@@ -73,47 +84,62 @@ public class CommandController {
     @RequestMapping("/vul3")
     @ResponseBody
     public R vul3(String payload) throws Exception {
-        // 获取 ProcessImpl 类对象
-        Class<?> clazz = Class.forName("java.lang.ProcessImpl");
+        try {
+            // 获取 ProcessImpl 类对象
+            Class<?> clazz = Class.forName("java.lang.ProcessImpl");
 
-        // 获取 start 方法
-        Method method = clazz.getDeclaredMethod("start", String[].class, Map.class, String.class, ProcessBuilder.Redirect[].class, boolean.class);
-        method.setAccessible(true);
+            // 获取 start 方法
+            Method method = clazz.getDeclaredMethod("start", String[].class, Map.class, String.class, ProcessBuilder.Redirect[].class, boolean.class);
+            method.setAccessible(true);
 
-        Process process = (Process) method.invoke(null, new String[]{payload}, null, null, null, false);
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            StringBuilder output = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                output.append(line).append("\n");
+            Process process = (Process) method.invoke(null, new String[]{payload}, null, null, null, false);
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                StringBuilder output = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+                return R.ok(output.toString());
             }
-            return R.ok(output.toString());
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return R.error("当前JDK限制反射调用ProcessImpl.start：" + e.getMessage());
         }
     }
-
-
-    // 可执行命令白名单
-    private static final List<String> ALLOWED_COMMANDS = Arrays.asList("ls", "date");
 
     @RequestMapping("/safe")
     @ResponseBody
     public R safe(@RequestParam("payload") String payload) throws IOException {
-        // 验证命令是否在允许的列表中
-        if (!ALLOWED_COMMANDS.contains(payload)) {
-            return R.error("不允许执行该命令！");
+        List<String> command = ALLOWED_COMMANDS.get(payload);
+        if (command == null) {
+            return R.error("不允许执行该动作！");
         }
-        String[] cmdArray = { "sh", "-c", payload };
-        ProcessBuilder pb = new ProcessBuilder(cmdArray);
+
+        ProcessBuilder pb = new ProcessBuilder(command);
         pb.redirectErrorStream(true);
         Process process = pb.start();
-        InputStream inputStream = process.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        String line;
-        StringBuilder output = new StringBuilder();
-        while ((line = reader.readLine()) != null) {
-            output.append(line).append("\n");
+        try {
+            if (!process.waitFor(3, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                return R.error("命令执行超时！");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return R.error("命令执行被中断！");
         }
-        return R.ok(output.toString());
+        String output = readProcessOutput(process);
+        return R.ok(output);
+    }
+
+    private String readProcessOutput(Process process) throws IOException {
+        try (InputStream inputStream = process.getInputStream();
+             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            String line;
+            StringBuilder output = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+            return output.toString();
+        }
     }
 
 

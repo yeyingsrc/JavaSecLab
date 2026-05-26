@@ -12,7 +12,8 @@
                     </legend>
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
-                        <pre>  RCE(Remote Code Execution)，可以分为:命令注入(Command Injection)、代码注入(Code Injection)</pre>
+                        <pre>  RCE(Remote Code Execution)：攻击者让服务端执行非预期的系统命令或代码逻辑。常见类型包括命令注入(Command Injection)和代码注入(Code Injection)。</pre>
+                        <pre>  代码注入通常发生在业务把不可信输入交给脚本引擎、表达式引擎、模板引擎或动态编译执行。风险不只来自“执行命令”，读取文件、访问网络、反射调用和修改业务数据同样危险。</pre>
                     </blockquote>
                 </fieldset>
             </div>
@@ -55,8 +56,10 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  Groovy是一种基于JVM的动态语言，语法简洁，支持闭包、动态类型和Java互操作性，常用于脚本开发和自动化任务
-  Groovy代码注入漏洞通常是由于未对用户输入进行适当的验证和过滤，导致恶意输入被直接执行为 Groovy脚本的一部分</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">问题点：
+  1、GroovyShell.evaluate 会把字符串当作 Groovy 代码执行，不可信输入进入这里就是高危代码注入。
+  2、Groovy 能调用 Java API、反射、文件、网络和进程执行能力，危害不局限于弹计算器。
+  3、黑名单过滤 execute、Runtime 等关键字很容易被编码、反射、字符串拼接或其他 API 绕过。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -91,20 +94,22 @@
             <div class="layui-col-md12" style="margin-top: 10px">
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-anquan"> 安全场景：Groovy脚本白名单</span></h1>
+                        <h1><span class="iconfont icon-anquan"> 安全场景：受控动作分发</span></h1>
                         <div class="layui-tab layui-tab-brief">
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
                                     <blockquote class="layui-elem-quote main_btn">
                                         <form class="layui-form" style="display: flex; justify-content: space-between;">
                                             <input type="text" name="payload" style="width: 300px;" required
-                                                   lay-verify="required" value='"whoami".execute()' autocomplete="off"
+                                                   lay-verify="required" value="hello" autocomplete="off"
                                                    class="layui-input" id="safe-groovy-input">
                                             <div style="display: flex; align-items: center;">
                                                 <select class="layui-form-select" lay-filter="safe-groovy-select">
                                                     <option value="">示例Payload</option>
-                                                    <option value="'open -a Calculator'.execute()">弹计算器-mac</option>
-                                                    <option value="'calc'.execute()">弹计算器-win</option>
+                                                    <option value="hello">问候动作</option>
+                                                    <option value="time">当前时间</option>
+                                                    <option value="sum">求和动作</option>
+                                                    <option value='"whoami".execute()'>非法脚本示例</option>
                                                 </select>
                                                 <button class="layui-btn layui-btn-normal"
                                                         style="width: 100px; margin-left: 10px;"
@@ -120,7 +125,11 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  使用白名单或预定义的脚本模板来限制执行的范围,例如只允许执行whoami、id、ls命令</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">安全编码建议：
+  1、不要把用户输入交给 GroovyShell、ScriptEngine、模板引擎或表达式引擎直接执行。
+  2、把“可执行脚本”改造成“可选择动作”：用户只能选择动作名，服务端执行固定 Java 逻辑。
+  3、如果确实需要脚本能力，应使用隔离执行环境、最小权限、资源限制、审计和人工发布流程。
+  4、脚本文本白名单只适合内部发布的固定脚本，不适合让外部用户提交任意脚本。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -141,7 +150,7 @@
                     </div>
 
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-code"> 缺陷代码</span></h1>
+                        <h1><span class="iconfont icon-code"> 安全代码</span></h1>
                         <div class="m-auto div-shadow shadow p-3 mb-5 bg-white rounded">
                             <div class="code-editor" id="safeGroovy"></div>
                         </div>

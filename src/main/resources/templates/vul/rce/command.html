@@ -12,7 +12,8 @@
                     </legend>
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
-                        <pre>  RCE(Remote Code Execution)，可以分为:命令注入(Command Injection)、代码注入(Code Injection)</pre>
+                        <pre>  RCE(Remote Code Execution)：攻击者让服务端执行非预期的系统命令或代码逻辑。常见类型包括命令注入(Command Injection)和代码注入(Code Injection)。</pre>
+                        <pre>  命令注入的本质是：不可信输入进入系统命令或 shell 语法结构，攻击者可以改变原命令语义。代码注入的本质是：不可信输入被解释器、表达式引擎或脚本引擎当作代码执行。</pre>
                     </blockquote>
                 </fieldset>
             </div>
@@ -57,8 +58,10 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">命令注入漏洞场景：
-    在开发中，特定开发需求中引入对系统本地命令的支持，而未进行输入验证时，可能会导致命令注入漏洞</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">问题点：
+  1、ProcessBuilder 本身不是漏洞，危险点在于把用户输入放进 sh -c 这类 shell 解释上下文。
+  2、shell 会解析 ;、&&、|、$()、反引号、重定向等元字符，攻击者可拼接额外命令。
+  3、如果业务必须调用系统命令，应避免 shell，改用固定参数数组并限制可选动作。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -124,10 +127,10 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">代码审计SINK点：
-    1、ProcessBuilder
-    2、Runtime.exec()
-    3、反射调用 ProcessImpl.start</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">审计关注点：
+  1、Runtime.exec() 可以直接执行用户可控命令，尤其要关注从请求参数、Header、配置、数据库进入的命令字符串。
+  2、Runtime.exec(String) 不等同于 shell，但仍允许攻击者控制要执行的程序和参数。
+  3、若代码使用 /bin/sh -c、cmd.exe /c 包装 Runtime.exec()，风险会升级为完整 shell 命令注入。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -191,10 +194,10 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">安全编码规范：
-    1、限制执行权限：避免使用Runtime、ProcessBuilder等函数，即使使用这类函数也应确保执行命令的进程具有最小权限，避免提升到更高的权限级别。
-    2、避免直接拼接命令字符串：尽可能使用专门的API或库来处理系统任务，避免直接构建和执行命令字符串
-    3、输入验证：对所有用户输入进行严格验证，确保符合预期格式，建立白名单机制，仅允许合法的输入和命令类型</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">审计关注点：
+  1、反射调用 ProcessImpl.start、ProcessBuilder.start 等底层入口仍然是命令执行。
+  2、不要只搜索 Runtime.exec，反射、脚本引擎、模板引擎、反序列化链也可能最终落到命令执行。
+  3、新版 JDK 对 JDK 内部类反射限制更严格，测试结果可能受运行时模块访问策略影响。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -234,15 +237,14 @@
                                     <blockquote class="layui-elem-quote main_btn">
                                         <form class="layui-form" style="display: flex; justify-content: space-between;">
                                             <input type="text" name="payload" style="width: 300px;" required
-                                                   lay-verify="required" value="whoami" autocomplete="off"
+                                                   lay-verify="required" value="list" autocomplete="off"
                                                    class="layui-input" id="safe-processBuilder-input">
                                             <div style="display: flex; align-items: center;">
                                                 <select class="layui-form-select" lay-filter="safe-processBuilder-select">
                                                     <option value="">示例Payload</option>
-                                                    <option value="open -a Calculator">弹计算器-mac</option>
-                                                    <option value="calc">
-                                                        弹计算器-win
-                                                    </option>
+                                                    <option value="list">列目录</option>
+                                                    <option value="date">当前时间</option>
+                                                    <option value="whoami;id">非法拼接示例</option>
                                                 </select>
                                                 <button class="layui-btn layui-btn-normal"
                                                         style="width: 100px; margin-left: 10px;"
@@ -258,7 +260,11 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">白名单：只允许执行ls、date命令</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">安全编码建议：
+  1、首选业务 API 或语言内置能力，能不用系统命令就不要调用系统命令。
+  2、必须执行命令时，让用户只选择业务动作，再由服务端映射到固定命令和固定参数。
+  3、不要把用户输入交给 sh -c、cmd.exe /c，也不要拼接完整命令字符串。
+  4、设置最小权限、工作目录、超时、输出长度限制和审计日志，避免命令卡死或扩大影响面。</pre>
                                         </div>
                                     </div>
                                 </div>

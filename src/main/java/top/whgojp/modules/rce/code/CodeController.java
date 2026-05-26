@@ -10,9 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import top.whgojp.common.utils.R;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-
-import java.util.Arrays;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * @description RCE - 代码注入
@@ -53,31 +52,18 @@ public class CodeController {
     @GetMapping("/safeGroovy")
     @ResponseBody
     public R safeGroovy(String payload) {
-        List<String> trustedScripts = Arrays.asList(
-                "\"id\".execute()",
-                "\"ls\".execute()",
-                "\"whoami\".execute()"
-        );
-        if (!isTrustedScript(payload, trustedScripts)) {
-            return R.error("非法的脚本输入！");
+        if ("hello".equals(payload)) {
+            return R.ok("[+] 受控动作执行结果：Hello JavaSecLab");
         }
-        try {
-            GroovyShell shell = new GroovyShell();
-            Object result = shell.evaluate(payload);
-            if (result instanceof Process) {
-                Process process = (Process) result;
-                String output = getProcessOutput(process);
-                return R.ok("[+] 执行受信任的脚本，结果：" + output);
-            } else {
-                return R.ok("[+] 执行受信任的脚本，结果：" + result.toString());
-            }
-        } catch (Exception e) {
-            return R.error(e.getMessage());
+        if ("time".equals(payload)) {
+            return R.ok("[+] 受控动作执行结果：" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         }
+        if ("sum".equals(payload)) {
+            return R.ok("[+] 受控动作执行结果：" + (1 + 2 + 3));
+        }
+        return R.error("非法的动作输入！");
     }
-    private boolean isTrustedScript(String script, List<String> trustedScripts) {
-        return trustedScripts.contains(script);
-    }
+
     private String getProcessOutput(Process process) {
         StringBuilder output = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
