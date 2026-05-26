@@ -1758,17 +1758,31 @@ const vulXffforgery = "public String vul1(HttpServletRequest request, Model mode
     "}";
 
 const safeXffforgery = "public String safe(HttpServletRequest request, HttpServletResponse response, Model model, String xff){\n" +
-    "    ...\n" +
-    "    if (!isTrustedProxy(remoteHost)){\n" +
-    "        model.addAttribute(\"clientIP\", request.getRemoteAddr());\n" +
-    "        model.addAttribute(\"sensitiveInfo\", \"源ip不在白名单范围内！\");\n" +
+    "    String proxyIp = request.getRemoteAddr();\n" +
+    "    String remoteHost = proxyIp;\n" +
+    "    if (\"true\".equals(xff)) {\n" +
+    "        if (!isTrustedProxy(proxyIp)){\n" +
+    "            model.addAttribute(\"clientIP\", proxyIp);\n" +
+    "            model.addAttribute(\"sensitiveInfo\", \"非可信代理来源，忽略XFF头：\" + proxyIp);\n" +
+    "            return \"vul/other/onlyForGoogle\";\n" +
+    "        }\n" +
+    "        remoteHost = getFirstForwardedIp(request.getHeader(\"X-Forwarded-For\"));\n" +
+    "    }\n" +
+    "    if (remoteHost == null || remoteHost.isEmpty()) {\n" +
+    "        model.addAttribute(\"clientIP\", proxyIp);\n" +
+    "        model.addAttribute(\"sensitiveInfo\", \"XFF头为空或格式异常！\");\n" +
     "        return \"vul/other/onlyForGoogle\";\n" +
     "    }\n" +
-    "    ...\n" +
+    "    boolean isClientIP8888 = \"8.8.8.8\".equals(remoteHost);\n" +
+    "    model.addAttribute(\"clientIP\", remoteHost);\n" +
+    "    if (isClientIP8888) {\n" +
+    "        model.addAttribute(\"sensitiveInfo\", \"username:admin,password:Admin123\");\n" +
+    "    }\n" +
+    "    return \"vul/other/onlyForGoogle\";\n" +
     "}\n" +
     "// 判断是否来自可信代理\n" +
     "private boolean isTrustedProxy(String ip) {\n" +
-    "    return Arrays.asList(\"127.0.0.1\", \"192.168.1.1\", \"10.0.0.1\").contains(ip);\n" +
+    "    return Arrays.asList(\"192.168.1.1\", \"10.0.0.1\").contains(ip);\n" +
     "}"
 
 const vulCsrf = "public R vul(String receiver, String amount, @AuthenticationPrincipal UserDetails userDetails){\n" +
@@ -1923,6 +1937,19 @@ const vulDos = "public void vul(Integer width,Integer height,HttpServletResponse
     "        throw new RuntimeException(e);\n" +
     "    }\n" +
     "}"
+const safeDos = "public void safe(Integer width,Integer height,HttpServletResponse response) throws IOException {\n" +
+    "    if (width == null || height == null || width <= 0 || height <= 0\n" +
+    "            || width > MAX_IMAGE_WIDTH || height > MAX_IMAGE_HEIGHT\n" +
+    "            || (long) width * height > MAX_IMAGE_PIXELS) {\n" +
+    "        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);\n" +
+    "        response.setContentType(\"text/plain;charset=UTF-8\");\n" +
+    "        response.getWriter().write(\"图片尺寸超出限制\");\n" +
+    "        return;\n" +
+    "    }\n" +
+    "    response.setContentType(\"image/jpeg\");\n" +
+    "    ShearCaptcha shearCaptcha = CaptchaUtil.createShearCaptcha(width, height, 4, 3);\n" +
+    "    shearCaptcha.write(response.getOutputStream());\n" +
+    "}"
 const vul2Dos = "// 如果解压出的文件是ZIP文件，则递归解压\n" +
     "if (entry.getName().endsWith(\".zip\")) {\n" +
     "    // 创建临时文件来存储这个ZIP\n" +
@@ -1967,16 +1994,13 @@ const safeXpath = "public R safe(String username,String password) {\n" +
     "        String xml = \"<users><user><username>admin</username><password>password</password></user></users>\";\n" +
     "        Document doc = builder.parse(new InputSource(new StringReader(xml)));\n" +
     "\n" +
-    "        // 使用StringEscapeUtils.escapeXml10()方法对用户输入进行XML实体转义\n" +
-    "        String escapedUsername = StringEscapeUtils.escapeXml10(username);\n" +
-    "        String escapedPassword = StringEscapeUtils.escapeXml10(password);\n" +
-    "\n" +
     "        XPath xpath = XPathFactory.newInstance().newXPath();\n" +
-    "        String expression = \"/users/user[username='\" + escapedUsername + \"' and password='\" + escapedPassword + \"']\";\n" +
+    "        xpath.setXPathVariableResolver(variableName -> resolveXPathVariable(variableName, username, password));\n" +
+    "        String expression = \"/users/user[username=$username and password=$password]\";\n" +
     "        NodeList nodes = (NodeList) xpath.evaluate(expression, doc, XPathConstants.NODESET);\n" +
     "\n" +
     "        if (nodes.getLength() > 0) {\n" +
-    "            return R.ok(\"用户名和密码验证通过！欢迎：\" + escapedUsername);\n" +
+    "            return R.ok(\"用户名和密码验证通过！欢迎：\" + username);\n" +
     "        } else {\n" +
     "            return R.error(\"认证失败：用户名或密码错误\");\n" +
     "        }\n" +

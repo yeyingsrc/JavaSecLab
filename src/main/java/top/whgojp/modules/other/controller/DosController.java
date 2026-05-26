@@ -33,6 +33,10 @@ import java.util.zip.ZipInputStream;
 @CrossOrigin(origins = "*")
 @RequestMapping("/other/dos")
 public class DosController {
+    private static final int MAX_IMAGE_WIDTH = 800;
+    private static final int MAX_IMAGE_HEIGHT = 300;
+    private static final int MAX_IMAGE_PIXELS = 240_000;
+
     @RequestMapping("")
     public String dos() {
         return "vul/other/dos";
@@ -51,11 +55,33 @@ public class DosController {
             throw new RuntimeException(e);
         }
     }
+
+    @RequestMapping("/safe")
+    public void safe(@RequestParam Integer width, @RequestParam Integer height, HttpServletResponse response) throws IOException {
+        if (width == null || height == null || width <= 0 || height <= 0
+                || width > MAX_IMAGE_WIDTH || height > MAX_IMAGE_HEIGHT
+                || (long) width * height > MAX_IMAGE_PIXELS) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("text/plain;charset=UTF-8");
+            response.getWriter().write("图片尺寸超出限制");
+            return;
+        }
+        response.setContentType("image/jpeg");
+        response.setHeader("Pragma", "no-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        ShearCaptcha shearCaptcha = CaptchaUtil.createShearCaptcha(width, height,4,3);
+        shearCaptcha.write(response.getOutputStream());
+    }
+
     @RequestMapping("/vul2")
     @ResponseBody
     public R vul2(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return R.error("请先选择ZIP文件");
+        }
+        File tempFile = null;
         try {
-            File tempFile = convertMultipartFileToFile(file);
+            tempFile = convertMultipartFileToFile(file);
             // 限制解压深度为 1，防止无限递归
             int maxDepth = 1;
             unzip(tempFile, 0, maxDepth);
@@ -63,6 +89,10 @@ public class DosController {
         } catch (Exception e) {
             e.printStackTrace();
             return R.error("文件解压失败: " + e.getMessage());
+        } finally {
+            if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+            }
         }
     }
 

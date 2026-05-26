@@ -16,8 +16,8 @@
                     </legend>
                     <blockquote class="layui-elem-quote layui-quote-nm" style="background-color: #e0f7fa;">
                         <p>
-                        <pre>  XPath是一种用于查询和操作XML文档的语言，类似于SQL在数据库中的作用，广泛应用于XML解析和数据提取</pre>
-                        <pre>  XPath注入类似于SQL注入，攻击者通过构造特殊的输入操控未过滤的XPath查询，从而访问或篡改XML数据，甚至绕过验证获取敏感信息</pre>
+                        <pre>  XPath是一种用于查询XML文档的表达式语言，常见于配置、身份数据、SOAP/XML接口或本地XML文件查询。</pre>
+                        <pre>  XPath注入发生在用户输入被拼接进XPath表达式时，攻击者可改变查询条件，绕过认证或读取非预期节点。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -58,7 +58,7 @@
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i> tips
                                         </div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e; font-size: 15px;">类似于SQL注入，可使用"万能密码"</pre>
+                                            <pre style="color: #28333e; font-size: 15px;">类似于SQL注入，可使用万能条件让谓词恒真，例如：' or '1'='1</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -87,7 +87,7 @@
                 <div class="layui-row layui-col-space15">
                     <!-- 漏洞场景部分 -->
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-anquan"> 安全场景：StringEscapeUtils实体转义</span></h1>
+                        <h1><span class="iconfont icon-anquan"> 安全场景：XPath变量绑定</span></h1>
                         <div class="layui-tab layui-tab-brief">
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
@@ -119,7 +119,7 @@
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i> tips
                                         </div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e; font-size: 15px;">  StringEscapeUtils.escapeXml10()是Apache Commons Lang方法，用于将 &、<、>、' 和 " 转换为XML 实体，确保字符串安全用于XML文档</pre>
+                                            <pre style="color: #28333e; font-size: 15px;">  不把用户输入拼接进XPath表达式，而是使用变量绑定或业务层精确匹配；XML实体转义适合写入XML文本，不能等同于XPath注入修复。</pre>
                                         </div>
                                     </div>
                                 </div>

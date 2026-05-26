@@ -27,6 +27,8 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 @RequestMapping("/other/xff")
 public class XffForgeryController {
+    private static final List<String> TRUSTED_PROXY_IPS = Arrays.asList("192.168.1.1", "10.0.0.1");
+
     @ApiOperation("")
     @RequestMapping("")
     public String XffForgery() {
@@ -68,10 +70,10 @@ public class XffForgeryController {
 
         // 前后端分离 模拟通过X-Forwarded-For头获取客户端IP
         String remoteHost = "";
-        if (xff.equals("true")) {
+        if ("true".equals(xff)) {
             remoteHost = request.getHeader("X-Forwarded-For");
         }
-        if (remoteHost.isEmpty()) {
+        if (remoteHost == null || remoteHost.isEmpty()) {
             remoteHost = request.getRemoteHost();
         }
         boolean isClientIP8888 = "8.8.8.8".equals(remoteHost);
@@ -86,16 +88,19 @@ public class XffForgeryController {
 
     @RequestMapping("/safe")
     public String safe(HttpServletRequest request, HttpServletResponse response, Model model, String xff){
-        String remoteHost = "";
-        if (xff.equals("true")) {
-            remoteHost = request.getHeader("X-Forwarded-For");
+        String proxyIp = request.getRemoteAddr();
+        String remoteHost = proxyIp;
+        if ("true".equals(xff)) {
+            if (!isTrustedProxy(proxyIp)){
+                model.addAttribute("clientIP", proxyIp);
+                model.addAttribute("sensitiveInfo", "非可信代理来源，忽略XFF头：" + proxyIp);
+                return "vul/other/onlyForGoogle";
+            }
+            remoteHost = getFirstForwardedIp(request.getHeader("X-Forwarded-For"));
         }
-        if (remoteHost.isEmpty()) {
-            remoteHost = request.getRemoteHost();
-        }
-        if (!isTrustedProxy(remoteHost)){
+        if (remoteHost == null || remoteHost.isEmpty()) {
             model.addAttribute("clientIP", request.getRemoteAddr());
-            model.addAttribute("sensitiveInfo", "源ip不在白名单范围内！");
+            model.addAttribute("sensitiveInfo", "XFF头为空或格式异常！");
             return "vul/other/onlyForGoogle";
         }
         boolean isClientIP8888 = "8.8.8.8".equals(remoteHost);
@@ -107,8 +112,14 @@ public class XffForgeryController {
     }
     // 判断是否来自可信代理
     private boolean isTrustedProxy(String ip) {
-        return Arrays.asList("127.0.0.1", "192.168.1.1", "10.0.0.1").contains(ip);
+        return TRUSTED_PROXY_IPS.contains(ip);
     }
 
+    private String getFirstForwardedIp(String xForwardedFor) {
+        if (xForwardedFor == null || xForwardedFor.trim().isEmpty()) {
+            return "";
+        }
+        return xForwardedFor.split(",")[0].trim();
+    }
 
 }

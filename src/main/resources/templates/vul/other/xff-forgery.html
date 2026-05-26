@@ -12,7 +12,7 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                            <pre>  XFF伪造：通过篡改HTTP头字段(X-Forwarded-For)隐瞒真实IP地址，危害包括隐藏身份、绕过访问控制和污染日志</pre>
+                            <pre>  XFF伪造：服务端在未确认请求来自可信代理时直接信任X-Forwarded-For，攻击者即可伪造客户端IP，绕过基于IP的访问控制或污染审计日志。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -128,9 +128,9 @@
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
                                             <pre style="color: #28333e;font-size: 15px;">安全编码规范：
-    1. 配置可信IP白名单，仅允许可信代理设置或修改该头信息。
-    2. 限制XFF头格式(合法IPv4/IPv6地址、设定最大长度)，防范恶意格式注入与缓冲区溢出攻击。
-    3. 在身份校验和授权中，结合会话标识符、用户令牌等多因素验证，防止伪造导致的认证绕过。</pre>
+    1. 只在 request.getRemoteAddr() 命中可信代理白名单时解析 X-Forwarded-For。
+    2. 取第一个客户端IP前应校验格式、长度和私有地址策略，异常时回退到真实连接来源。
+    3. 不要把客户端IP作为唯一认证依据，关键授权应结合登录态、角色、资源归属和审计。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -164,7 +164,7 @@
             var xff = $("#xff").is(':checked');
 
             $.ajax({
-                url: "[[@{/other/xff/vul2}]]",
+                url: "/other/xff/vul2",
                 type: "get",
                 headers: {
                     'X-Forwarded-For': "8.8.8.8",
@@ -175,7 +175,11 @@
                     document.write(result)
                 },
                 error: function () {
-                    alert("请求发送失败！");
+                    if (layui.layer) {
+                        layui.layer.msg("请求发送失败！", {icon: 2, offset: '10px'});
+                    } else {
+                        alert("请求发送失败！");
+                    }
                 }
             });
         });
@@ -196,7 +200,11 @@
                     document.write(result)
                 },
                 error: function () {
-                    alert("请求发送失败！");
+                    if (layui.layer) {
+                        layui.layer.msg("请求发送失败！", {icon: 2, offset: '10px'});
+                    } else {
+                        alert("请求发送失败！");
+                    }
                 }
             });
         });

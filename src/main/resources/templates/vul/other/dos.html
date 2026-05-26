@@ -12,12 +12,12 @@
             <div class="layui-col-md12">
                 <fieldset class="layui-elem-field layui-field-title">
                     <legend>
-                        <a class="dos" style="color: rgb(30 159 255)">其他漏洞 - Dos攻击</a>
+                        <a class="dos" style="color: rgb(30 159 255)">其他漏洞 - DoS攻击</a>
                     </legend>
                     <blockquote class="layui-elem-quote layui-quote-nm" style="background-color: #a7deefab;">
                         <p>
-                        <pre>  DoS攻击：由单一来源发起，旨在使目标服务不可用，通常规模较小，易于防御</pre>
-                        <pre>  DDoS攻击：由多个来源协同发起，产生巨量流量，导致大规模服务中断，防御难度较大</pre>
+                        <pre>  DoS攻击：攻击者通过异常输入、资源放大或高成本操作耗尽CPU、内存、磁盘或线程池，使服务不可用。</pre>
+                        <pre>  DDoS攻击：由多个来源协同发起，产生巨量流量或请求压力，防御重点通常在流量清洗、限速和弹性扩容。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -32,8 +32,8 @@
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
                                     <blockquote class="layui-elem-quote main_btn">
-                                        <p>图片功能点(二维码/验证码)参数长、宽可控时，可能导致拒绝服务</p>
-                                        <a target="_blank" href="/other/dos/vul?width=10000&height=10000">
+                                        <p>图片功能点(二维码/验证码)参数长、宽可控时，可能造成CPU和内存消耗放大。</p>
+                                        <a target="_blank" href="/other/dos/vul?width=1200&height=1200">
                                             <button class="layui-btn layui-btn-normal" style="width: 100px;">Run</button>
                                         </a>
                                     </blockquote>
@@ -46,6 +46,46 @@
                         <h1><span class="iconfont icon-code">  缺陷代码</span></h1>
                         <div class="m-auto div-shadow shadow p-3 mb-5 bg-white rounded">
                             <div class="code-editor" id="vulDos"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 漏洞场景：ZIP解压炸弹 -->
+            <div class="layui-col-md12">
+                <div class="layui-row layui-col-space15">
+                    <div class="layui-col-md6">
+                        <h1><span class="iconfont icon-anquan">  安全场景：图片尺寸限制</span></h1>
+                        <div class="layui-tab layui-tab-brief">
+                            <div class="layui-tab-content">
+                                <div class="layui-tab-item layui-show">
+                                    <blockquote class="layui-elem-quote main_btn">
+                                        <p>服务端限制宽高、总像素和请求频率，避免用户输入直接决定资源消耗。</p>
+                                        <a target="_blank" href="/other/dos/safe?width=1200&height=1200">
+                                            <button class="layui-btn layui-btn-normal" style="width: 100px;">拦截测试</button>
+                                        </a>
+                                        <a target="_blank" href="/other/dos/safe?width=300&height=120">
+                                            <button class="layui-btn layui-btn-normal" style="width: 100px;">正常生成</button>
+                                        </a>
+                                    </blockquote>
+                                </div>
+
+                                <div class="layui-col-md12">
+                                    <div class="layui-card">
+                                        <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i> tips</div>
+                                        <div class="layui-card-body layui-text layadmin-text">
+                                            <pre>图片、报表、压缩、加密、搜索等高成本功能都应设置输入上限、超时、并发限制和异步队列。</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layui-col-md6">
+                        <h1><span class="iconfont icon-code">  安全代码</span></h1>
+                        <div class="m-auto div-shadow shadow p-3 mb-5 bg-white rounded">
+                            <div class="code-editor" id="safeDos"></div>
                         </div>
                     </div>
                 </div>
@@ -140,6 +180,7 @@
                     },
                     error: function () {
                         console.log("上传文件失败");
+                        $(config.resultElem).html("上传文件失败，请检查文件类型和大小");
                     }
                 });
             }
@@ -167,6 +208,7 @@
 
             // 初始化代码编辑器
             CodeMirror(document.getElementById("vulDos"), Object.assign({}, cmConfig, { value: vulDos }));
+            CodeMirror(document.getElementById("safeDos"), Object.assign({}, cmConfig, { value: safeDos }));
             CodeMirror(document.getElementById("vul2Dos"), Object.assign({}, cmConfig, { value: vul2Dos }));
 
             // hover 效果

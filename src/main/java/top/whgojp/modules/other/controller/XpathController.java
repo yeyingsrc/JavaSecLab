@@ -2,7 +2,6 @@ package top.whgojp.modules.other.controller;
 
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.w3c.dom.Document;
@@ -12,6 +11,7 @@ import top.whgojp.common.utils.R;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.namespace.QName;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
@@ -72,15 +72,13 @@ public class XpathController {
             String xml = "<users><user><username>admin</username><password>password</password></user></users>";
             Document doc = builder.parse(new InputSource(new StringReader(xml)));
 
-            String escapedUsername = StringEscapeUtils.escapeXml10(username);
-            String escapedPassword = StringEscapeUtils.escapeXml10(password);
-
             XPath xpath = XPathFactory.newInstance().newXPath();
-            String expression = "/users/user[username='" + escapedUsername + "' and password='" + escapedPassword + "']";
+            xpath.setXPathVariableResolver(variableName -> resolveXPathVariable(variableName, username, password));
+            String expression = "/users/user[username=$username and password=$password]";
             NodeList nodes = (NodeList) xpath.evaluate(expression, doc, XPathConstants.NODESET);
 
             if (nodes.getLength() > 0) {
-                return R.ok("用户名和密码验证通过！欢迎：" + escapedUsername);
+                return R.ok("用户名和密码验证通过！欢迎：" + username);
             } else {
                 return R.error("认证失败：用户名或密码错误");
             }
@@ -88,6 +86,16 @@ public class XpathController {
             e.printStackTrace();
             return R.error("服务器内部错误：" + e.getMessage());
         }
+    }
+
+    private Object resolveXPathVariable(QName variableName, String username, String password) {
+        if ("username".equals(variableName.getLocalPart())) {
+            return username;
+        }
+        if ("password".equals(variableName.getLocalPart())) {
+            return password;
+        }
+        return "";
     }
 
 }
