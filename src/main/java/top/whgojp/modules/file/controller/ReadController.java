@@ -4,16 +4,10 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import lombok.var;
-import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import top.whgojp.common.constant.SysConstant;
-import top.whgojp.common.utils.CheckUserInput;
-import top.whgojp.common.utils.R;
-import top.whgojp.common.utils.UploadUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @description 任意文件类-文件读取
@@ -50,7 +45,7 @@ public class ReadController {
         if (file.exists() && file.isFile()) {
             Path filePath = file.toPath();
             // 使用 BufferedReader 和流 API 逐行读取文件
-            try (var lines = Files.lines(filePath)) {
+            try (Stream<String> lines = Files.lines(filePath)) {
                 return lines
                         .map(line -> line + "<br/>")
                         .collect(Collectors.joining());
@@ -68,14 +63,18 @@ public class ReadController {
     @ResponseBody
     public String safe(@RequestParam("fileName") String fileName) throws IOException {
         String baseDir = sysConstant.getUploadFolder();
-        Path filePath = Paths.get(baseDir, fileName).normalize();
-        // 确保文件路径在允许的目录中
-        if (!filePath.startsWith(Paths.get(baseDir))) {
+        Path basePath = Paths.get(baseDir).toRealPath();
+        Path filePath = basePath.resolve(fileName).normalize();
+        // 先标准化路径，再确认目标文件仍位于允许目录内。
+        if (!filePath.startsWith(basePath)) {
             return "访问被拒绝：文件路径不合法";
         }
-        File file = filePath.toFile();
-        if (file.exists() && file.isFile()) {
-            return new String(Files.readAllBytes(file.toPath()));
+        if (Files.isRegularFile(filePath)) {
+            Path realFilePath = filePath.toRealPath();
+            if (!realFilePath.startsWith(basePath)) {
+                return "访问被拒绝：文件真实路径不合法";
+            }
+            return new String(Files.readAllBytes(realFilePath));
         } else {
             return "文件不存在或路径不正确：" + fileName;
         }

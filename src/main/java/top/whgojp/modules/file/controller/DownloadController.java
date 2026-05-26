@@ -12,6 +12,7 @@ import top.whgojp.common.constant.SysConstant;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -63,16 +64,20 @@ public class DownloadController {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "非法文件名：" + fileName);
             return;
         }
-        File file = new File(baseDir, fileName);
-        if (file.exists() && file.isFile() && file.getCanonicalPath().startsWith(new File(baseDir).getCanonicalPath())) {
+        Path basePath = Paths.get(baseDir).toRealPath();
+        Path filePath = basePath.resolve(fileName).normalize();
+        if (filePath.startsWith(basePath) && Files.isRegularFile(filePath)) {
+            Path realFilePath = filePath.toRealPath();
+            if (!realFilePath.startsWith(basePath)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "文件真实路径不合法：" + fileName);
+                return;
+            }
             response.setContentType("application/octet-stream");
-            response.setHeader("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"");
-            try (FileInputStream fis = new FileInputStream(file);
+            response.setHeader("Content-Disposition", "attachment; filename=\"" + realFilePath.getFileName().toString() + "\"");
+            try (InputStream fis = Files.newInputStream(realFilePath);
                  OutputStream os = response.getOutputStream()) {
                 StreamUtils.copy(fis, os);
                 os.flush();
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

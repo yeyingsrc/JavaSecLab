@@ -13,7 +13,12 @@ import top.whgojp.common.utils.CheckUserInput;
 import top.whgojp.common.utils.R;
 import top.whgojp.common.utils.UploadUtil;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Locale;
 
 /**
  * @description 任意文件类-文件上传
@@ -60,9 +65,32 @@ public class UploadController {
         if (!checkUserInput.checkFileSuffixWhiteList(suffix)){
             return R.error("只能上传图片哦！");
         }
+        if (!isAllowedImageContent(file, suffix)) {
+            return R.error("文件内容与图片类型不匹配！");
+        }
         String path = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/file/";
         res = uploadUtil.uploadFile(file, suffix, path);
         return R.ok(res);
+    }
+
+    private boolean isAllowedImageContent(MultipartFile file, String suffix) throws IOException {
+        String normalizedSuffix = suffix.toLowerCase(Locale.ROOT);
+        if ("ico".equals(normalizedSuffix)) {
+            try (InputStream inputStream = file.getInputStream()) {
+                byte[] header = new byte[4];
+                if (inputStream.read(header) != header.length) {
+                    return false;
+                }
+                return header[0] == 0 && header[1] == 0 && header[2] == 1 && header[3] == 0;
+            }
+        }
+        try (InputStream inputStream = file.getInputStream()) {
+            BufferedImage image = ImageIO.read(inputStream);
+            return image != null;
+        } catch (IOException e) {
+            log.warn("图片内容校验失败：{}", e.getMessage());
+            return false;
+        }
     }
 
 

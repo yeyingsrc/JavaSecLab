@@ -10,11 +10,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import top.whgojp.common.constant.SysConstant;
-import top.whgojp.common.utils.CheckUserInput;
-import top.whgojp.common.utils.R;
-import top.whgojp.common.utils.UploadUtil;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @description 任意文件类-文件删除
@@ -59,11 +59,19 @@ public class DeleteController {
     @ResponseBody
     @SneakyThrows
     public String safe(@RequestParam("fileName") String fileName) {
-        String baseDir = sysConstant.getUploadFolder(); // 限制删除文件所在目录为 /static/upload/下
-        File file = new File(baseDir, fileName);
+        String baseDir = sysConstant.getUploadFolder();
+        Path basePath = Paths.get(baseDir).toRealPath();
+        Path filePath = basePath.resolve(fileName).normalize();
+        if (!filePath.startsWith(basePath)) {
+            return "访问被拒绝：文件路径不合法";
+        }
         boolean deleted = false;
-        if (file.exists() && file.getCanonicalPath().startsWith(new File(baseDir).getCanonicalPath())) {
-            deleted = file.delete();
+        if (Files.isRegularFile(filePath)) {
+            Path realFilePath = filePath.toRealPath();
+            if (!realFilePath.startsWith(basePath)) {
+                return "访问被拒绝：文件真实路径不合法";
+            }
+            deleted = Files.deleteIfExists(filePath);
         }
         if (deleted) {
             return "文件删除成功: " + fileName;
