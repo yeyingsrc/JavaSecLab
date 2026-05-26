@@ -1347,6 +1347,17 @@ const vulSAXParser = "public String vul2(String payload) {\n" +
     "    }\n" +
     "}"
 
+const vulDocumentBuilder = "public String vul3(String payload) {\n" +
+    "    try {\n" +
+    "        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\n" +
+    "        DocumentBuilder builder = factory.newDocumentBuilder();\n" +
+    "        Document document = builder.parse(new InputSource(new StringReader(payload)));\n" +
+    "        return document.getDocumentElement().getTextContent();\n" +
+    "    } catch (Exception e) {\n" +
+    "        return e.toString();\n" +
+    "    }\n" +
+    "}"
+
 const safeXMLReader = "public String safe1(String payload) {\n" +
     "    try {\n" +
     "        XMLReader xmlReader = XMLReaderFactory.createXMLReader();\n" +
@@ -1361,6 +1372,30 @@ const safeXMLReader = "public String safe1(String payload) {\n" +
     "        return stringWriter.toString();\n" +
     "    } catch (Exception e) {\n" +
     "        return e.getMessage();\n" +
+    "    }\n" +
+    "}"
+const safeDocumentBuilder = "public String safe3(String payload) {\n" +
+    "    try {\n" +
+    "        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\n" +
+    "        factory.setFeature(\"http://apache.org/xml/features/disallow-doctype-decl\", true);\n" +
+    "        factory.setFeature(\"http://xml.org/sax/features/external-general-entities\", false);\n" +
+    "        factory.setFeature(\"http://xml.org/sax/features/external-parameter-entities\", false);\n" +
+    "        factory.setFeature(\"http://apache.org/xml/features/nonvalidating/load-external-dtd\", false);\n" +
+    "        factory.setXIncludeAware(false);\n" +
+    "        factory.setExpandEntityReferences(false);\n" +
+    "        setAttributeIfSupported(factory, XMLConstants.ACCESS_EXTERNAL_DTD, \"\");\n" +
+    "        setAttributeIfSupported(factory, XMLConstants.ACCESS_EXTERNAL_SCHEMA, \"\");\n" +
+    "        DocumentBuilder builder = factory.newDocumentBuilder();\n" +
+    "        builder.setEntityResolver((publicId, systemId) -> new InputSource(new StringReader(\"\")));\n" +
+    "        ...\n" +
+    "    } catch (Exception e) {\n" +
+    "        return e.toString();\n" +
+    "    }\n" +
+    "}\n" +
+    "private void setAttributeIfSupported(DocumentBuilderFactory factory, String name, String value) {\n" +
+    "    try {\n" +
+    "        factory.setAttribute(name, value);\n" +
+    "    } catch (IllegalArgumentException ignored) {\n" +
     "    }\n" +
     "}"
 const safeBlackList = "// 黑名单只能作为辅助检测，不应替代解析器安全配置\n" +

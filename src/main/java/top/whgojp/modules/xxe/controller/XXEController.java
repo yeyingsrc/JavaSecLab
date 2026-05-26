@@ -17,6 +17,7 @@ import top.whgojp.common.utils.R;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.SAXParser;
@@ -73,7 +74,7 @@ public class XXEController {
 
 
     /**
-     * javax.xml.parsers.SAXParser 是 XMLReader 的替代品，它提供了更多的安全措施，例如默认禁用 DTD 和外部实体的声明，如果需要使用 DTD 或外部实体，可以手动启用它们，并使用相应的安全措施
+     * SAXParser 解析不可信 XML 时同样需要显式关闭 DTD、外部实体和外部 DTD 加载。
      */
     @RequestMapping(value = "/vul2")
     @ResponseBody
@@ -95,6 +96,19 @@ public class XXEController {
             };
             parser.parse(new InputSource(new StringReader(payload)), handler);
             return stringWriter.toString();
+        } catch (Exception e) {
+            return e.toString();
+        }
+    }
+
+    @RequestMapping(value = "/vul3")
+    @ResponseBody
+    public String vul3(@RequestParam String payload) {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document document = builder.parse(new InputSource(new StringReader(payload)));
+            return formatXmlText(document.getDocumentElement().getTextContent());
         } catch (Exception e) {
             return e.toString();
         }
@@ -215,6 +229,8 @@ public class XXEController {
             xmlReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             xmlReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
             xmlReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            xmlReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            xmlReader.setEntityResolver((publicId, systemId) -> new InputSource(new StringReader("")));
             StringWriter stringWriter = new StringWriter();
             xmlReader.setContentHandler(new DefaultHandler() {
                 public void characters(char[] ch, int start, int length) {
@@ -234,6 +250,29 @@ public class XXEController {
         }
     }
 
+    @RequestMapping(value = "/safe3")
+    @ResponseBody
+    public String safe3(@RequestParam String payload) {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
+            setAttributeIfSupported(factory, XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            setAttributeIfSupported(factory, XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            builder.setEntityResolver((publicId, systemId) -> new InputSource(new StringReader("")));
+            Document document = builder.parse(new InputSource(new StringReader(payload)));
+            return formatXmlText(document.getDocumentElement().getTextContent());
+        } catch (Exception e) {
+            return e.toString();
+        }
+    }
+
     @RequestMapping(value = "/safe2")
     @ResponseBody
     public String safe2(@RequestParam String payload) {
@@ -246,6 +285,20 @@ public class XXEController {
         return "[-]XML内容安全";
     }
 
+    private String formatXmlText(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.replace("\n", "<br/>");
+    }
+
+    private void setAttributeIfSupported(DocumentBuilderFactory factory, String name, String value) {
+        try {
+            factory.setAttribute(name, value);
+        } catch (IllegalArgumentException e) {
+            log.warn("XML parser does not support attribute: {}", name);
+        }
+    }
 
 
 }

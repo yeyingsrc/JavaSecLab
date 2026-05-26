@@ -1,9 +1,9 @@
 # 常规漏洞
 
 ## 跨站脚本
-跨站脚本模块适合作为综合性Java靶场的核心模块：当前覆盖了反射型、存储型、DOM型、模板引擎不安全渲染、文件上传导致的存储型XSS、第三方组件XSS、WebSocket XSS、postMessage XSS、CSP、HttpOnly、输出编码等常见场景。
+当前覆盖反射型、存储型、DOM型、模板引擎不安全渲染、文件上传导致的存储型XSS、第三方组件XSS、WebSocket XSS、postMessage XSS、CSP、HttpOnly、输出编码等常见场景。
 
-本次已将页面描述统一为：XSS的本质是不可信数据进入浏览器页面执行上下文后，被当作HTML、脚本、URL或可执行DOM操作解析。修复优先按输出上下文处理数据，普通文本使用HTML实体编码或安全DOM API，URL/属性/JavaScript/CSS等位置使用对应编码与白名单校验；CSP、HttpOnly、输入过滤是辅助防护，不能替代根因修复。
+XSS的本质是不可信数据进入浏览器页面执行上下文后，被当作HTML、脚本、URL或可执行DOM操作解析。修复优先按输出上下文处理数据，普通文本使用HTML实体编码或安全DOM API，URL/属性/JavaScript/CSS等位置使用对应编码与白名单校验；CSP、HttpOnly、输入过滤是辅助防护，不能替代根因修复。
 
 已覆盖类型
 
@@ -94,9 +94,9 @@
 
 ## SQL注入
 
-SQL注入模块适合作为综合性Java靶场的核心模块：当前覆盖了JDBC原生拼接、伪预编译拼接、JdbcTemplate拼接、参数化查询、MyBatis动态SQL、Hibernate HQL/原生SQL、JPA JPQL/动态排序等常见开发栈。
+当前覆盖JDBC原生拼接、伪预编译拼接、JdbcTemplate拼接、参数化查询、MyBatis动态SQL、Hibernate HQL/原生SQL、JPA JPQL/动态排序等常见开发栈。
 
-本次已将页面描述统一为：SQL注入的本质是不可信输入进入SQL语法结构并改变原SQL语义；修复优先使用参数化查询，列名、表名、排序方向等SQL结构必须使用枚举或白名单映射。黑名单、类型校验、ESAPI编码只作为辅助方案，不应作为首选修复方案。
+SQL注入的本质是不可信输入进入SQL语法结构并改变原SQL语义；修复优先使用参数化查询，列名、表名、排序方向等SQL结构必须使用枚举或白名单映射。黑名单、类型校验、ESAPI编码只作为辅助方案，不应作为首选修复方案。
 
 已覆盖类型
 
@@ -194,9 +194,9 @@ SQL注入模块适合作为综合性Java靶场的核心模块：当前覆盖了J
 
 ## 任意文件操作
 
-任意文件操作模块适合作为综合性Java靶场的基础模块：当前覆盖了任意文件上传、任意文件读取、任意文件下载、任意文件删除四类常见风险，能串联“上传恶意文件 -> 通过静态映射访问 -> 读取/下载敏感文件 -> 删除业务文件”的典型文件安全链路。
+当前覆盖任意文件上传、任意文件读取、任意文件下载、任意文件删除四类常见风险，能串联“上传恶意文件 -> 通过静态映射访问 -> 读取/下载敏感文件 -> 删除业务文件”的典型文件安全链路。
 
-本次已将页面描述统一为：任意文件类漏洞的本质是用户可控的文件名、路径、内容或文件元数据进入文件系统操作后，应用没有正确限制目录边界、文件类型、访问方式和业务权限。修复时不要只依赖字符串替换、黑名单或前端限制，应使用后端白名单、服务端生成文件名、路径标准化、真实路径校验、目录隔离、权限校验和审计日志。
+任意文件类漏洞的本质是用户可控的文件名、路径、内容或文件元数据进入文件系统操作后，应用没有正确限制目录边界、文件类型、访问方式和业务权限。修复时不要只依赖字符串替换、黑名单或前端限制，应使用后端白名单、服务端生成文件名、路径标准化、真实路径校验、目录隔离、权限校验和审计日志。
 
 已覆盖类型
 
@@ -263,9 +263,9 @@ SQL注入模块适合作为综合性Java靶场的核心模块：当前覆盖了J
 
 ## SSRF
 
-SSRF模块适合作为综合性Java靶场的基础网络安全模块：当前覆盖了任意协议请求、本地文件读取、内网HTTP访问、跳转链访问内网，以及协议、域名白名单、解析后IP校验和禁止自动跳转等常见修复点。
+当前覆盖任意协议请求、本地文件读取、内网HTTP访问、跳转链访问内网，以及协议、域名白名单、解析后IP校验和禁止自动跳转等常见修复点。
 
-本次已将页面描述统一为：SSRF的本质是服务端把用户可控的URL、主机名或资源地址用于发起网络请求，且未限制协议、目标主机、解析后的IP和跳转链路。攻击者可借服务端网络身份访问内网服务、云元数据、管理端口、本地文件或第三方资源。修复优先使用业务枚举或服务端映射，不直接接受完整URL；必须限制协议、校验白名单域名、解析所有目标IP并拦截内网地址，且对30x跳转链路逐跳复检。
+SSRF的本质是服务端把用户可控的URL、主机名或资源地址用于发起网络请求，且未限制协议、目标主机、解析后的IP和跳转链路。攻击者可借服务端网络身份访问内网服务、云元数据、管理端口、本地文件或第三方资源。修复优先使用业务枚举或服务端映射，不直接接受完整URL；必须限制协议、校验白名单域名、解析所有目标IP并拦截内网地址，且对30x跳转链路逐跳复检。
 
 已覆盖类型
 
@@ -305,6 +305,52 @@ SSRF模块适合作为综合性Java靶场的基础网络安全模块：当前覆
 | 跳转链拦截       | `GET /ssrf/safe?url=http://127.0.0.1/ssrf/redirect?target=http://127.0.0.1/ssrf/internal/metadata` | 跳转到内网      | 第一跳目标不在白名单，直接返回“非白名单域名！”；安全代码同时禁用自动跳转 |
 | 超时控制         | 访问慢速或不可达HTTP地址                                     | 慢速目标        | 连接/读取超时后返回异常信息，不长期阻塞请求线程              |
 
+
+## XXE
+
+当前覆盖XMLReader、SAXParser、DocumentBuilder三类常见Java XML解析入口，可演示外部实体读取本地文件、通过外部实体访问内网地址，以及禁用DOCTYPE/外部实体/外部DTD/外部Schema的修复方式。
+
+XXE的本质是应用解析不可信XML时允许DTD或外部实体，攻击者可通过SYSTEM/PUBLIC外部实体让解析器读取本地文件、访问内网地址、触发SSRF，或利用实体膨胀造成拒绝服务。修复不应依赖某个解析器版本的默认行为，应在每个XML解析入口显式禁用DOCTYPE、外部通用实体、外部参数实体和外部DTD加载；DOM类解析器还应限制`ACCESS_EXTERNAL_DTD`和`ACCESS_EXTERNAL_SCHEMA`。
+
+已覆盖类型
+
+| 分类 | 已有场景 | 结论 |
+| --- | --- | --- |
+| SAX/XMLReader | `XMLReaderFactory.createXMLReader()` | 覆盖底层SAX解析入口的外部实体展开风险 |
+| SAXParser | `SAXParserFactory.newInstance()` | 覆盖常见SAXParser封装场景，强调不要依赖默认安全行为 |
+| DOM/DocumentBuilder | `DocumentBuilderFactory.newInstance()` | 覆盖业务中常见DOM解析、配置导入、XML文档读取场景 |
+| 安全写法 | 禁用DOCTYPE、外部实体、外部DTD、外部Schema，配置空EntityResolver | 覆盖推荐修复主线 |
+| 辅助检测 | 关键词黑名单检测`ENTITY`、`DOCTYPE` | 保留为辅助检测，不作为根因修复 |
+
+模块覆盖符合综合性靶场定位。后续如需增强，可补充“StAX/XMLInputFactory”“JAXB Unmarshaller”“dom4j SAXReader/JDOM SAXBuilder”“XInclude”“Billion Laughs实体膨胀DoS”“盲XXE/OOB回连”等专项场景。当前模块保留为Java常见解析器入口与安全配置主线即可。
+
+### XXE漏洞场景测试
+
+页面：`/xxe/vul`
+
+| 场景 | 请求 | 测试输入 | 预期结果 |
+| --- | --- | --- | --- |
+| 页面访问 | `GET /xxe/vul` | 无 | 页面正常打开，展示XMLReader、SAXParser、DocumentBuilder漏洞场景和代码片段 |
+| XMLReader读取本地文件 | `GET /xxe/vul1?payload=<xml>` | `<!ENTITY xxe SYSTEM "file:///etc/hosts">` | 返回hosts文件内容，证明外部实体被展开 |
+| XMLReader访问内网 | `GET /xxe/vul1?payload=<xml>` | `<!ENTITY xxe SYSTEM "http://127.0.0.1/ssrf/internal/metadata">` | 返回模拟元数据，证明可触发SSRF链路 |
+| SAXParser读取本地文件 | `GET /xxe/vul2?payload=<xml>` | `<!ENTITY xxe SYSTEM "file:///etc/hosts">` | 返回hosts文件内容或解析器外部实体展开结果 |
+| DocumentBuilder读取本地文件 | `GET /xxe/vul3?payload=<xml>` | `<!ENTITY xxe SYSTEM "file:///etc/hosts">` | 返回hosts文件内容，证明DOM解析器同样受影响 |
+| DocumentBuilder访问内网 | `GET /xxe/vul3?payload=<xml>` | `<!ENTITY xxe SYSTEM "http://127.0.0.1/ssrf/internal/metadata">` | 返回模拟元数据 |
+| 审计SINK点 | 页面tips | XMLReader、SAXParser、DocumentBuilder、XMLStreamReader等 | 页面列出常见XML解析入口，便于代码审计 |
+
+### XXE安全场景测试
+
+页面：`/xxe/safe`
+
+| 场景 | 请求 | 测试输入 | 预期结果 |
+| --- | --- | --- | --- |
+| 页面访问 | `GET /xxe/safe` | 无 | 页面正常打开，展示安全配置和辅助检测场景 |
+| XMLReader安全配置 | `GET /xxe/safe1?payload=<xml>` | 带DOCTYPE和外部实体的payload | 返回DOCTYPE被禁止或外部实体无法展开的错误信息，不泄露文件内容 |
+| XMLReader正常XML | `GET /xxe/safe1?payload=<root>hello</root>` | 不含DTD的普通XML | 返回`hello` |
+| DocumentBuilder安全配置 | `GET /xxe/safe3?payload=<xml>` | 带DOCTYPE和外部实体的payload | 返回DOCTYPE被禁止或外部实体无法展开的错误信息，不泄露文件内容 |
+| DocumentBuilder正常XML | `GET /xxe/safe3?payload=<root>hello</root>` | 不含DTD的普通XML | 返回`hello` |
+| 黑名单辅助拦截 | `GET /xxe/safe2?payload=<xml>` | 带`DOCTYPE`或`ENTITY`关键字 | 返回`[+]检测到恶意XML！` |
+| 黑名单正常XML | `GET /xxe/safe2?payload=<root>hello</root>` | 普通XML | 返回`[-]XML内容安全` |
 
 
 # Java 专题
