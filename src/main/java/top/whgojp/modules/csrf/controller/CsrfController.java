@@ -13,6 +13,10 @@ import top.whgojp.common.utils.R;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -80,12 +84,12 @@ public class CsrfController {
 
     @GetMapping("/safe1")
     @ResponseBody
-    public Map<String, Object> safe1(@RequestParam("receiver") String receiver,@RequestParam("amount") String amount,@AuthenticationPrincipal UserDetails userDetails,@RequestParam("csrfToken") String csrfToken,HttpSession session) {
+    public Map<String, Object> safe1(@RequestParam("receiver") String receiver, @RequestParam("amount") String amount, @AuthenticationPrincipal UserDetails userDetails, @RequestParam(value = "csrfToken", required = false) String csrfToken, HttpSession session) {
         String currentUser = userDetails.getUsername();
 
         String sessionToken = (String) session.getAttribute("csrfToken");
         Map<String, Object> result = new HashMap<>();
-        if (!csrfToken.equals(sessionToken)) {
+        if (!constantTimeEquals(csrfToken, sessionToken)) {
             result.put("success", false);
             result.put("message", "Token失效！");
             return result;
@@ -102,16 +106,55 @@ public class CsrfController {
     public Map<String, Object> safe2(HttpServletRequest request, @RequestParam("receiver") String receiver, @RequestParam("amount") String amount, @AuthenticationPrincipal UserDetails userDetails, HttpSession session) {
         String currentUser = userDetails.getUsername();
         Map<String, Object> result = new HashMap<>();
-        String referer = request.getHeader("referer");
-        if (referer == null || !referer.startsWith("http://127.0.0.1")) {
+        String originOrReferer = request.getHeader("Origin");
+        if (originOrReferer == null) {
+            originOrReferer = request.getHeader("Referer");
+        }
+        if (!isTrustedSameOrigin(request, originOrReferer)) {
             result.put("success", false);
-            result.put("message", "referer无效！");
+            result.put("message", "Origin/Referer无效！");
             return result;
         }
         result.put("currentUser", currentUser);
         result.put("receiver", receiver);
         result.put("amount", amount);
         return result;
+    }
+
+    private boolean constantTimeEquals(String requestToken, String sessionToken) {
+        if (requestToken == null || sessionToken == null) {
+            return false;
+        }
+        return MessageDigest.isEqual(
+                requestToken.getBytes(StandardCharsets.UTF_8),
+                sessionToken.getBytes(StandardCharsets.UTF_8)
+        );
+    }
+
+    private boolean isTrustedSameOrigin(HttpServletRequest request, String originOrReferer) {
+        if (originOrReferer == null) {
+            return false;
+        }
+        try {
+            URI uri = new URI(originOrReferer);
+            String expectedScheme = request.getScheme();
+            String expectedHost = request.getServerName();
+            int expectedPort = request.getServerPort();
+            int actualPort = uri.getPort() == -1 ? defaultPort(uri.getScheme()) : uri.getPort();
+
+            return expectedScheme.equalsIgnoreCase(uri.getScheme())
+                    && expectedHost.equalsIgnoreCase(uri.getHost())
+                    && expectedPort == actualPort;
+        } catch (URISyntaxException e) {
+            return false;
+        }
+    }
+
+    private int defaultPort(String scheme) {
+        if ("https".equalsIgnoreCase(scheme)) {
+            return 443;
+        }
+        return 80;
     }
 
 }
