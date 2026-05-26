@@ -14,8 +14,8 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>  同源策略(Same Origin Policy)：浏览器为保护用户信息免受不同源的网页访问，实施同源策略，规定只有在协议、域名、端口号三者相同的情况下，一个网页或脚本才能访问另一个网页的内容。</pre>
-                        <pre>  实际上很多场景还是需要进行跨源访问操作(前后端分离、调用第三方接口)，常用的有以下几种跨域解决方法：CORS、JSONP、PostMessge、WebSockets、代理服务器。不过提供便利的同时也伴随着一些安全问题……</pre>
+                        <pre>  同源策略(Same Origin Policy)：浏览器限制脚本读取不同源的响应内容；协议、域名、端口三者完全一致才属于同源。它主要约束“读响应”，并不等价于阻止请求发出。</pre>
+                        <pre>  跨源资源共享(CORS)：服务端通过 Access-Control-Allow-Origin 等响应头声明哪些来源可以读取响应。CORS 配置错误通常发生在敏感接口反射任意 Origin、信任过宽来源，或在允许凭证时放开跨源读取。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -29,7 +29,7 @@
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
                                     <blockquote class="layui-elem-quote main_btn">
-                                        <p>动态设置Access-Control-Allow-Origin为请求来源，导致潜在的任意跨域访问风险</p>
+                                        <p>服务端把请求中的 Origin 原样写回 Access-Control-Allow-Origin，并允许携带凭证</p>
                                         <a target="_blank" href="/crossorigin/corsVul">
                                             <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;">
                                                 <span class="iconfont icon-zhihang">Run</span>
@@ -42,10 +42,10 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  如果服务器配置了不安全的 Access-Control-Allow-Origin（如使用 * 或动态匹配请求的 Origin），并且允许携带凭证（Access-Control-Allow-Credentials: true），攻击者可以在恶意网站发起跨域请求并成功读取服务器响应，导致用户的敏感数据被窃取或恶意操作得以执行。
-  CORS漏洞与其他漏洞(如CSRF或XSS)组合使用时，会大幅提升攻击的破坏力，形成以下主要危害：
-跨域数据窃取、身份盗用和会话劫持、绕过CSRF防御机制、数据操纵与业务逻辑篡改
- </pre>
+                                            <pre style="color: #28333e;font-size: 15px;">问题点：
+  1、Access-Control-Allow-Origin 反射任意 Origin，相当于把敏感响应开放给任意站点读取。
+  2、Access-Control-Allow-Credentials: true 会让浏览器在跨源 XHR/fetch 中携带 Cookie 等凭证。
+  3、CORS 不是认证或鉴权机制，放宽 CORS 只是在放宽浏览器读取响应的边界。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -66,12 +66,12 @@
             <div class="layui-col-md12" style="margin-top: 10px">
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-anquan"> 安全代码：CrossOrigin白名单</span></h1>
+                        <h1><span class="iconfont icon-anquan"> 安全场景：CORS白名单</span></h1>
                         <div class="layui-tab layui-tab-brief">
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
                                     <blockquote class="layui-elem-quote main_btn">
-                                        <p>通过将Access-Control-Allow-Origin限定为可信来源，从而防止潜在的跨域数据泄露风险</p>
+                                        <p>只对精确匹配白名单的 Origin 返回 CORS 响应头；不可信来源直接拒绝</p>
                                         <a target="_blank" href="/crossorigin/corsSafe">
                                             <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;">
                                                 <span class="iconfont icon-zhihang">Run</span>
@@ -84,11 +84,11 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">安全编码规范:
-    1.严格限制允许的来源(Access-Control-Allow-Origin),只允许受信任的域名，禁止使用*通配符，避免动态来源。
-    2.限制可用的HTTP方法和请求头(Access-Control-Allow-Methods和Access-Control-Allow-Headers)，仅允许必要的HTTP请求方法(GET、POST)，限制自定义头部(Access-Control-Allow-Headers)。
-    3.不要信任全部自身子域，减少攻击面
-</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">安全编码建议：
+  1、维护精确 Origin 白名单，完整匹配协议、域名、端口，不使用字符串 contains/startsWith 判断。
+  2、允许凭证时必须返回具体可信 Origin，不能使用 *，并加上 Vary: Origin 避免缓存污染。
+  3、只开放必要的方法和请求头；不因为 CORS 白名单通过就跳过认证、鉴权和 CSRF 防护。
+  4、谨慎信任子域和本地开发域名，接入测试域、预发域前也要评估账号体系和数据权限。</pre>
                                         </div>
                                     </div>
                                 </div>

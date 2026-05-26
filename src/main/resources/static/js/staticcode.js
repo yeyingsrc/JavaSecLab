@@ -1864,7 +1864,6 @@ const safeCORS = "private static final Set<String> TRUSTED_ORIGINS = new HashSet
     "        return R.ok(\"同源请求不需要CORS响应头\");\n" +
     "    }\n" +
     "    if (!TRUSTED_ORIGINS.contains(origin)) {\n" +
-    "        response.setHeader(\"Access-Control-Allow-Origin\", \"\");\n" +
     "        response.setStatus(HttpServletResponse.SC_FORBIDDEN);\n" +
     "        return R.error(HttpServletResponse.SC_FORBIDDEN, \"Origin不在CORS白名单\");\n" +
     "    }\n" +

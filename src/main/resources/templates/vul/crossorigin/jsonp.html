@@ -14,8 +14,8 @@
           <blockquote class="layui-elem-quote layui-quote-nm"
                       style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
             <p>
-            <pre>  同源策略(Same Origin Policy)：浏览器为保护用户信息免受不同源的网页访问，实施同源策略，规定只有在协议、域名、端口号三者相同的情况下，一个网页或脚本才能访问另一个网页的内容。</pre>
-            <pre>  实际上很多场景还是需要进行跨源访问操作(前后端分离、调用第三方接口)，常用的有以下几种跨域解决方法：CORS、JSONP、PostMessge、WebSockets、代理服务器。不过提供便利的同时也伴随着一些安全问题……</pre>
+            <pre>  同源策略(Same Origin Policy)：浏览器限制脚本读取不同源的响应内容；协议、域名、端口三者完全一致才属于同源。script 标签加载脚本不受同源读取限制，这是 JSONP 能工作的基础。</pre>
+            <pre>  JSONP(JSON with Padding)：服务端把 JSON 数据包进 callback(...) 形式，让页面通过 script 标签跨源加载执行。它只支持 GET，缺少现代 CORS 的细粒度控制，不适合承载账号、权限、订单等敏感数据。</pre>
             </p>
           </blockquote>
         </fieldset>
@@ -29,7 +29,7 @@
               <div class="layui-tab-content">
                 <div class="layui-tab-item layui-show">
                   <blockquote class="layui-elem-quote main_btn">
-                    <p>JSONP的全称是JSON With Padding，是一种基于JSON格式来解决跨域请求资源的方案</p>
+                    <p>接口把敏感数据包进未校验的 callback 参数，任意站点都可以通过 script 标签读取</p>
                     <a target="_blank" href="/crossorigin/jsonpVul?callback=stealData">
                       <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;">
                         <span class="iconfont icon-zhihang">Run</span>
@@ -42,7 +42,10 @@
                   <div class="layui-card">
                     <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                     <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  JSONP漏洞通常发生在服务器未对请求的callback参数进行严格的合法性校验，导致攻击者可以恶意操控返回的数据格式，窃取敏感信息或执行恶意代码</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">问题点：
+  1、JSONP 响应会被浏览器当作脚本执行，不受普通 XHR/fetch 的同源读取限制。
+  2、callback 未校验可能造成脚本注入；即使校验了 callback，敏感数据仍可能被任意站点通过 script 标签读取。
+  3、JSONP 只适合公开只读数据，不能用于登录态相关或含隐私信息的接口。</pre>
                     </div>
                   </div>
                 </div>
@@ -63,12 +66,12 @@
       <div class="layui-col-md12" style="margin-top: 10px">
         <div class="layui-row layui-col-space15">
           <div class="layui-col-md6">
-            <h1><span class="iconfont icon-anquan"> 安全场景：正则校验callback参数</span></h1>
+            <h1><span class="iconfont icon-anquan"> 安全场景：callback校验与公开数据</span></h1>
             <div class="layui-tab layui-tab-brief">
               <div class="layui-tab-content">
                 <div class="layui-tab-item layui-show">
                   <blockquote class="layui-elem-quote main_btn">
-                    <p></p>
+                    <p>校验 callback 格式，并且只返回公开数据；敏感接口应迁移到受控 CORS</p>
                     <a target="_blank" href="/crossorigin/jsonpSafe?callback=stealData">
                       <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;">
                         <span class="iconfont icon-zhihang">Run</span>
@@ -81,11 +84,11 @@
                   <div class="layui-card">
                     <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                     <div class="layui-card-body layui-text layadmin-text">
-                      <pre style="color: #28333e;font-size: 15px;">安全编码规范：
-    1.回调函数名校验：只允许字母、数字、下划线组合，并使用正则表达式进行格式验证。
-    2.使用白名单：限制允许的回调函数名为预定义的安全列表。
-    3.设置内容类型：将响应类型设置为 application/javascript，防止浏览器误解析为其他类型。
-    4.替换为 CORS：优先使用 CORS 替代 JSONP 解决跨域问题。</pre>
+                      <pre style="color: #28333e;font-size: 15px;">安全编码建议：
+  1、能不用 JSONP 就不用 JSONP，优先迁移到 CORS、鉴权和标准 JSON API。
+  2、必须保留 JSONP 时，callback 只允许合法 JavaScript 标识符或受控白名单函数名。
+  3、JSONP 接口只返回公开、只读、可缓存数据，不返回用户身份、权限、订单、Token 等敏感信息。
+  4、设置 application/javascript;charset=UTF-8 和 X-Content-Type-Options: nosniff，降低错误解析风险。</pre>
                     </div>
                   </div>
                 </div>

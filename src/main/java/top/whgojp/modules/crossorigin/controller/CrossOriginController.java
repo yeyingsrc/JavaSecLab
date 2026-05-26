@@ -1,6 +1,5 @@
 package top.whgojp.modules.crossorigin.controller;
 
-import io.jsonwebtoken.io.IOException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +9,11 @@ import top.whgojp.common.utils.R;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * @description 跨源安全问题
@@ -24,6 +28,12 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping("/crossorigin")
 public class CrossOriginController {
 
+    private static final Set<String> TRUSTED_ORIGINS = new HashSet<>(Arrays.asList(
+            "http://127.0.0.1:8080",
+            "https://127.0.0.1:8080"
+    ));
+    private static final Pattern JSONP_CALLBACK_PATTERN = Pattern.compile("^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$");
+
     @RequestMapping("/cors")
     public String cors() {
         return "vul/crossorigin/cors";
@@ -33,10 +43,10 @@ public class CrossOriginController {
         return "vul/crossorigin/jsonp";
     }
 
-    @GetMapping("/corsVul")
+    @RequestMapping(value = "/corsVul", method = {RequestMethod.GET, RequestMethod.OPTIONS})
     @ResponseBody
     public R corsVul(HttpServletRequest request, HttpServletResponse response) {
-        String origin = request.getHeader("origin");
+        String origin = request.getHeader("Origin");
 
         if (origin != null) {
             response.setHeader("Access-Control-Allow-Origin", origin);
@@ -47,23 +57,33 @@ public class CrossOriginController {
         // 允许携带 Cookie 或其他凭证
         response.setHeader("Access-Control-Allow-Credentials", "true");
         response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+        response.setHeader("Vary", "Origin");
 
         return R.ok("CORS漏洞演示：username:admin,password:Admin123");
     }
-    @CrossOrigin(origins = {"http://127.0.0.1:8080", "https://127.0.0.1:8080"}, allowCredentials = "true")
-    @GetMapping("/corsSafe")
+
+    @RequestMapping(value = "/corsSafe", method = {RequestMethod.GET, RequestMethod.OPTIONS})
     @ResponseBody
     public R corsSafe(HttpServletRequest request, HttpServletResponse response) {
-        // 记录安全 CORS 请求来源
-        String origin = request.getHeader("origin");
-        // 允许携带凭证，但前提是 `Access-Control-Allow-Origin` 与可信来源匹配
+        String origin = request.getHeader("Origin");
+        response.setHeader("Vary", "Origin");
+        if (origin == null) {
+            return R.ok("同源请求不需要CORS响应头");
+        }
+        if (!TRUSTED_ORIGINS.contains(origin)) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return R.error(HttpServletResponse.SC_FORBIDDEN, "Origin不在CORS白名单");
+        }
+        response.setHeader("Access-Control-Allow-Origin", origin);
         response.setHeader("Access-Control-Allow-Credentials", "true");
-
+        response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+        response.setHeader("Access-Control-Allow-Headers", "Content-Type");
         return R.ok("配置CORS可信源白名单");
     }
 
     @GetMapping("/jsonpVul")
-    public void jsonpVul(HttpServletRequest request, HttpServletResponse response) throws IOException, java.io.IOException {
+    public void jsonpVul(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String callback = request.getParameter("callback");
         String sensitiveData = "{\"username\":\"admin\",\"password\":\"Admin123\"}";
 
@@ -71,25 +91,26 @@ public class CrossOriginController {
         String jsonpResponse = callback + "(" + sensitiveData + ");";
 
         // 设置响应类型为 JavaScript 脚本
-        response.setContentType("application/javascript");
+        response.setContentType("application/javascript;charset=UTF-8");
         response.getWriter().write(jsonpResponse);
     }
 
 
     @GetMapping("/jsonpSafe")
-    public void jsonpSafe(HttpServletRequest request, HttpServletResponse response) throws IOException, java.io.IOException {
+    public void jsonpSafe(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String callback = request.getParameter("callback");
 
         // 校验回调函数名是否合法
-        if (callback == null || !callback.matches("^[a-zA-Z_$][a-zA-Z0-9_$]*$")) {
+        if (callback == null || !JSONP_CALLBACK_PATTERN.matcher(callback).matches()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write("Invalid callback");
             return;
         }
 
-        String sensitiveData = "{\"username\":\"admin\",\"password\":\"Admin123\"}";
-        response.setContentType("application/javascript");
-        response.getWriter().write(callback + "(" + sensitiveData + ");");
+        String publicData = "{\"message\":\"public data only\"}";
+        response.setContentType("application/javascript;charset=UTF-8");
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        response.getWriter().write(callback + "(" + publicData + ");");
     }
 
 
