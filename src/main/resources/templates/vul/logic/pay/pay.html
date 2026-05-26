@@ -43,8 +43,8 @@
                                                        autocomplete="off" class="layui-input">
                                                 商品单价:&nbsp;
                                                 <input type="text" name="price" style="width: 120px;" required
-                                                       lay-verify="required" placeholder="商品单价" value="10000.00"
-                                                       autocomplete="off" disabled class="layui-input">
+                                                       lay-verify="required" placeholder="商品单价" value="0.01"
+                                                       autocomplete="off" class="layui-input">
                                             </div>
                                             <div style="display: flex; align-items: center;">
                                                 <button class="layui-btn layui-btn-normal"
@@ -323,10 +323,10 @@
                                         <form class="layui-form" style="display: flex; justify-content: space-between;">
                                             <div style="display: flex; align-items: center;">
                                                 商品数量:&nbsp;<input type="text" name="count" style="width: 120px;" required
-                                                       lay-verify="required" placeholder="商品数量" disabled value="10"
+                                                       lay-verify="required" placeholder="商品数量" value="2147483647"
                                                        autocomplete="off" class="layui-input">
                                                 商品单价:&nbsp;<input type="text" name="price" style="width: 120px;" required
-                                                       lay-verify="required" placeholder="商品单价" disabled value="200"
+                                                       lay-verify="required" placeholder="商品单价" value="10"
                                                        autocomplete="off" class="layui-input">
                                             </div>
                                             <div style="display: flex; align-items: center;">
@@ -383,10 +383,10 @@
                                         <form class="layui-form" style="display: flex; justify-content: space-between;">
                                             <div style="display: flex; align-items: center;">
                                                 商品数量:&nbsp;<input type="text" name="count" style="width: 120px;" required
-                                                       lay-verify="required" placeholder="商品数量" disabled value="10"
+                                                       lay-verify="required" placeholder="商品数量" value="0.1"
                                                        autocomplete="off" class="layui-input">
                                                 商品单价:&nbsp;<input type="text" name="price" style="width: 120px;" required
-                                                       lay-verify="required" placeholder="商品单价" disabled value="2000"
+                                                       lay-verify="required" placeholder="商品单价" value="0.2"
                                                        autocomplete="off" class="layui-input">
                                             </div>
                                             <div style="display: flex; align-items: center;">
@@ -404,7 +404,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  浮点数精度漏洞：由于浮点数计算的精度问题，可能导致金额计算不准确。尝试输入特殊的浮点数值，如数量0.1，单价0.2，实际结果可能不是精确的0.02。</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">  浮点数精度漏洞：金额如果先用 double 计算再转成 BigDecimal，可能出现 0.1 * 0.2 = 0.020000000000000004 这类精度误差。金额计算应使用 BigDecimal(String) 并统一舍入规则。</pre>
                                         </div>
                                     </div>
                                 </div>

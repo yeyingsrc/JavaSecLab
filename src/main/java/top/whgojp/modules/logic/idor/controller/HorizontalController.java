@@ -47,7 +47,7 @@ public class HorizontalController {
         // 获取当前登录的用户名
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         // 检查当前请求的用户名是否和登录用户名一致
-        if (!username.equals(currentUsername)) {
+        if (username == null || !username.equals(currentUsername)) {
             return R.error("您没有权限查看该用户的资料,当前登录用户："+currentUsername);
         }
         // 查询用户信息

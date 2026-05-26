@@ -17,7 +17,7 @@
                     <blockquote class="layui-elem-quote layui-quote-nm" style="background-color: #a7deefab;">
                         <p>
                         <pre>  IDOR(不安全的直接对象引用)：通过修改请求中的对象标识符(如用户ID、文件名)绕过授权检查，访问或操作本不属于自己的资源</pre>
-                        <pre>  垂直越权：通过修改请求中的标识符(用户ID、角色标识等)访问权限更高或更低的资源，绕过权限限制</pre>
+                        <pre>  垂直越权：低权限用户绕过服务端角色校验，访问原本只允许管理员或高权限角色使用的功能。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -31,13 +31,25 @@
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
                                     <blockquote class="layui-elem-quote main_btn">
-                                        <p>这里简单模拟一下垂直越权</p>
+                                        <p>低权限用户直接访问管理员功能地址，服务端未做角色校验</p>
                                         <a target="_blank" href="/logic/idor/vertical/vul">
                                             <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;">
                                                 <span class="iconfont icon-zhihang">Run</span>
                                             </button>
                                         </a>
                                     </blockquote>
+                                </div>
+
+                                <div class="layui-col-md12">
+                                    <div class="layui-card">
+                                        <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
+                                        <div class="layui-card-body layui-text layadmin-text">
+                                            <pre style="color: #28333e;font-size: 15px;">问题点：
+  1、前端菜单隐藏、按钮置灰、URL不可见都不是权限控制。
+  2、管理员接口必须在服务端校验当前用户角色、权限点和资源归属。
+  3、权限失败应返回403或统一无权限页，并记录审计日志。</pre>
+                                        </div>
+                                    </div>
                                 </div>
 
                             </div>
@@ -69,10 +81,6 @@
             form = layui.form,
             upload = layui.upload;
 
-        common.formListenFun("vul-horizontal-button", "", "/logic/idor/getUserInfo", "vul-horizontal-result", "get");
-        common.formListenFun("safe-horizontal-button", "", "/logic/idor/safe", "safe-horizontal-result", "get");
-
-
         miniTab.listen();
         layer.msg("其他漏洞-垂直越权");
 
@@ -87,19 +95,7 @@
             mode: "text/x-java"
         };
 
-        var cmConfigSafe = {
-            lineNumbers: true,
-            lineWrapping: false,
-            indentUnit: 4,
-            indentWithTabs: true,
-            theme: 'juejinsafe',
-            styleActiveLine: {nonEmpty: true},
-            fontSize: "18px",
-            mode: "text/x-java"
-        };
-
-        CodeMirror(document.getElementById("vulHorizon"), Object.assign({}, cmConfig, { value: vulHorizon }));
-        CodeMirror(document.getElementById("safeHorizon"), Object.assign({}, cmConfigSafe, { value: safeHorizon }));
+        CodeMirror(document.getElementById("vulHorizon"), Object.assign({}, cmConfig, { value: vulVertical }));
 
         $('.idor').hover(function () {
             $(this).css('cursor', 'pointer');

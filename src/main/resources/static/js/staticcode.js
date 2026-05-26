@@ -1523,7 +1523,7 @@ const safeHorizon = "public R safe(String username){\n" +
     "    // 获取当前登录的用户名\n" +
     "    String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();\n" +
     "    // 检查当前请求的用户名是否和登录用户名一致\n" +
-    "    if (!username.equals(currentUsername)) {\n" +
+    "    if (username == null || !username.equals(currentUsername)) {\n" +
     "        return R.error(\"您没有权限查看该用户的资料,当前登录用户：\"+currentUsername);\n" +
     "    }\n" +
     "    // 查询用户信息\n" +
@@ -1533,6 +1533,10 @@ const safeHorizon = "public R safe(String username){\n" +
     "    } else {\n" +
     "        return R.error(\"用户名不存在\");\n" +
     "    }\n" +
+    "}"
+const vulVertical = "public String vul() {\n" +
+    "    // 漏洞点：只要知道管理员功能地址即可直接访问，没有做服务端角色校验。\n" +
+    "    return \"vul/logic/idor/admin\";\n" +
     "}"
 
 // 支付漏洞
@@ -1637,8 +1641,9 @@ const vul5Pay = "public R integerOverflow(@RequestParam String count, @RequestPa
     "}";
 const vul6Pay = "public R floatingPointPrecision(@RequestParam String count, @RequestParam String price) {\n" +
     "    try {\n" +
-    "        // 使用BigDecimal处理金额计算，避免浮点数精度问题\n" +
-    "        BigDecimal amountValue = new BigDecimal(price).multiply(new BigDecimal(count));\n" +
+    "        double totalAmount = Double.parseDouble(count) * Double.parseDouble(price);\n" +
+    "        // 漏洞点：把二进制浮点计算结果直接转成金额，可能引入精度误差\n" +
+    "        BigDecimal amountValue = new BigDecimal(totalAmount);\n" +
     "        log.info(\"用户需支付金额：\" + amountValue);\n" +
     "\n" +
     "        BigDecimal currentMoney = userMoney.get();\n" +
@@ -1646,7 +1651,7 @@ const vul6Pay = "public R floatingPointPrecision(@RequestParam String count, @Re
     "            return R.error(\"支付金额不足，支付失败！\");\n" +
     "        }\n" +
     "        userMoney.set(currentMoney.subtract(amountValue));\n" +
-    "        return R.ok(\"支付成功！剩余余额：\" + userMoney.get());\n" +
+    "        return R.ok(\"支付成功！实际扣款金额：\" + amountValue + \"，剩余余额：\" + userMoney.get());\n" +
     "    } catch (Exception e) {\n" +
     "        return R.error(\"无效的输入，请输入有效的数量和价格！\");\n" +
     "    }\n" +

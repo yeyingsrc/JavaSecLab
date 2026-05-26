@@ -31,8 +31,6 @@ import java.util.HashMap;
 public class PayController {
     // 用户余额
     private final AtomicReference<BigDecimal> userMoney = new AtomicReference<>(new BigDecimal("1000.00"));
-    // 商品单价（用于服务端验证）
-    private final BigDecimal goodPrice = new BigDecimal("100.00");
     // 订单状态缓存
     private final Map<String, OrderStatus> orderStatusMap = new ConcurrentHashMap<>();
     // 支付状态缓存（用于防止重复支付）
@@ -204,8 +202,9 @@ public class PayController {
     @ResponseBody
     public R floatingPointPrecision(@RequestParam String count, @RequestParam String price) {
         try {
-            // 使用BigDecimal处理金额计算，避免浮点数精度问题
-            BigDecimal amountValue = new BigDecimal(price).multiply(new BigDecimal(count));
+            double totalAmount = Double.parseDouble(count) * Double.parseDouble(price);
+            // 漏洞点：把二进制浮点计算结果直接转成金额，可能引入精度误差
+            BigDecimal amountValue = new BigDecimal(totalAmount);
             log.info("用户需支付金额：" + amountValue);
 
             BigDecimal currentMoney = userMoney.get();
@@ -213,7 +212,7 @@ public class PayController {
                 return R.error("支付金额不足，支付失败！");
             }
             userMoney.set(currentMoney.subtract(amountValue));
-            return R.ok("支付成功！剩余余额：" + userMoney.get());
+            return R.ok("支付成功！实际扣款金额：" + amountValue + "，剩余余额：" + userMoney.get());
         } catch (Exception e) {
             return R.error("无效的输入，请输入有效的数量和价格！");
         }

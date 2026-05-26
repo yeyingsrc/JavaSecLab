@@ -160,7 +160,7 @@ public class GraphicController {
     @ResponseBody
     public R safe(String username, String password, String captcha, HttpSession session) {
         String sessionCaptcha = (String) session.getAttribute("safeCaptcha");
-        Long captchaTimestamp = (Long) session.getAttribute("captchaCreationTime");
+        Long captchaTimestamp = (Long) session.getAttribute("captchaTimestamp");
         // 验证验证码是否已失效（1分钟有效）
         if (captchaTimestamp == null || System.currentTimeMillis() - captchaTimestamp > 60 * 1000) {
             session.removeAttribute("safeCaptcha");

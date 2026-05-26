@@ -16,8 +16,8 @@
                     </legend>
                     <blockquote class="layui-elem-quote layui-quote-nm" style="background-color: #a7deefab;">
                         <p>
-                        <pre>  IDOR(不安全的直接对象引用)：通过修改请求中的对象标识符(如用户ID、文件名)绕过授权检查，访问或操作本不属于自己的资源</pre>
-                        <pre>  水平越权：攻击者通过修改请求中的标识符(如用户ID)访问同级别的其他用户资源，绕过权限控制</pre>
+                        <pre>  IDOR(不安全的直接对象引用)：服务端把用户可控的对象标识符直接用于查询或操作资源，但没有校验该资源是否属于当前登录用户。</pre>
+                        <pre>  水平越权：低权限差异不明显的同级用户之间，通过修改用户名、用户ID、订单ID、文件名等标识访问他人资源。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -50,7 +50,10 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">涉及权限处：cookie，url和post处id类名，功能点，文件名都可能存在越权漏洞</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">问题点：
+  1、接口直接信任请求参数中的 username，没有校验资源归属。
+  2、URL、POST参数、Cookie、Header、文件名、订单号等对象标识都可能成为越权入口。
+  3、返回密码等敏感字段会进一步扩大越权影响。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -107,10 +110,10 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">安全编码规范:
-  1、从可信存储获取账号信息：账号信息应从可信来源获取，如Session、JWT Token或OAuth Token，避免从不可信的请求参数、Cookie中直接提取用户身份信息
-  2、使用不可推测的标识符：避免使用容易预测的标识符（如自增ID），使用不可推测的标识符（如UUID、随机字符串）来防止越权访问
-  3、最小权限原则：每个用户或进程应仅拥有其完成任务所需的最小权限，避免授予不必要的权限或过多的权限</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">安全编码建议：
+  1、当前用户身份从 Session、JWT、OAuth Token 等可信上下文获取，不从请求参数决定。
+  2、每次读取或修改资源前，都校验资源 owner 与当前用户是否匹配。
+  3、不可预测ID只能降低枚举概率，不能替代服务端授权校验。</pre>
                                         </div>
                                     </div>
                                 </div>

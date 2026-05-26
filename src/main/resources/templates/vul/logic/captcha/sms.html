@@ -15,8 +15,8 @@
                     </legend>
                     <blockquote class="layui-elem-quote layui-quote-nm" style="background-color: #a7deefab;">
                         <p>
-                        <pre>  在如今的各类系统中，验证码成为了常见的安全验证手段,然而验证码同样存在诸多安全问题,这里把验证码安全分成图形验证码安全、短信验证码安全</pre>
-                        <pre>  短信验证码安全：验证码回显、验证码绕过、短信轰炸、验证码可控(条件有限，这里只做前两种漏洞演示)</pre>
+                        <pre>  短信验证码通常用于登录、找回密码和敏感操作确认，服务端必须绑定手机号、验证码、业务场景、有效期和使用次数。</pre>
+                        <pre>  本页演示验证码回显和验证码绕过；短信轰炸、验证码可控、跨场景复用等问题可作为后续扩展。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -62,7 +62,8 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  验证码回显：由于系统错误配置或开发疏忽，导致短信验证码被直接回显在响应包中</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">问题点：
+  短信验证码不应出现在响应体、前端日志或可被用户直接读取的位置；测试环境也应通过服务端日志或模拟通道隔离展示。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -132,7 +133,8 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  验证码绕过：通过Fuzz请求参数，添加code_verify=true即可绕过登录校验</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">问题点：
+  服务端信任了客户端提交的 code_verify 参数，相当于让用户自己声明“验证码已通过”。验证码校验结果只能由服务端状态决定。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -189,15 +191,15 @@
                 success: function (response) {
                     console.log(response)
                     if (response.code === 0) {
-                        $("#vul1-getSMS-result").text(response.msg);
+                        $("#vul1-sms-result").text(response.msg);
                         layer.msg('验证码已发送，请查收', {icon: 1, offset: '10px'});
                     } else {
-                        $("#vul1-getSMSa-result").text(response.msg);
+                        $("#vul1-sms-result").text(response.msg);
                     }
                 },
                 error: function () {
                     layer.msg('验证码发送失败，请检查', {icon: 2, offset: '10px'});
-                    $("#vul1-getSMS-result").text("请求失败，请重试！");
+                    $("#vul1-sms-result").text("请求失败，请重试！");
                 }
             });
             return false;
@@ -211,15 +213,15 @@
                 success: function (response) {
                     console.log(response)
                     if (response.code === 0) {
-                        $("#vul2-getSMS-result").text(response.msg);
+                        $("#vul2-sms-result").text(response.msg);
                         layer.msg('验证码已发送，请查收', {icon: 1, offset: '10px'});
                     } else {
-                        $("#vul2-getSMSa-result").text(response.msg);
+                        $("#vul2-sms-result").text(response.msg);
                     }
                 },
                 error: function () {
                     layer.msg('验证码发送失败，请检查', {icon: 2, offset: '10px'});
-                    $("#vul2-getSMS-result").text("请求失败，请重试！");
+                    $("#vul2-sms-result").text("请求失败，请重试！");
                 }
             });
             return false;
