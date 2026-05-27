@@ -248,9 +248,10 @@
               "href": "logic/pay",
               "icon": "iconfont icon-zhifu",
               "target": "_self"
-            },            {
+            },
+            {
               "title": "并发安全",
-              "href": "",
+              "href": "logic/concurrent",
               "icon": "iconfont icon-gaobingfa",
               "target": "_self"
             },

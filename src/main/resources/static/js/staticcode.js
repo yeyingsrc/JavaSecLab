@@ -1584,6 +1584,36 @@ const  vul3Pay = "public R vul3(@RequestParam String orderId, @RequestParam doub
     "    return R.ok(\"支付成功！剩余余额：\" + userMoney.get());\n" +
     "}";
 
+const vulConcurrent = "public R vul(@RequestParam String orderId, @RequestParam double amount) {\n" +
+    "    // 模拟业务处理耗时，扩大并发窗口\n" +
+    "    Thread.sleep(1000);\n" +
+    "\n" +
+    "    BigDecimal currentMoney = userMoney.get();\n" +
+    "    BigDecimal payAmount = BigDecimal.valueOf(amount);\n" +
+    "    if (currentMoney.compareTo(payAmount) < 0) {\n" +
+    "        return R.error(\"余额不足\");\n" +
+    "    }\n" +
+    "    // 漏洞点：读取余额和写回余额不是一个原子操作，相同订单也没有幂等校验\n" +
+    "    userMoney.set(currentMoney.subtract(payAmount));\n" +
+    "    return R.ok(\"支付成功！订单：\" + orderId + \"，剩余余额：\" + userMoney.get());\n" +
+    "}";
+
+const safeConcurrent = "public R safe(@RequestParam String orderId, @RequestParam double amount) {\n" +
+    "    BigDecimal payAmount = BigDecimal.valueOf(amount);\n" +
+    "    synchronized (paymentLock) {\n" +
+    "        if (paidOrders.contains(orderId)) {\n" +
+    "            return R.error(\"订单已支付，拒绝重复扣款：\" + orderId);\n" +
+    "        }\n" +
+    "        BigDecimal currentMoney = userMoney.get();\n" +
+    "        if (currentMoney.compareTo(payAmount) < 0) {\n" +
+    "            return R.error(\"余额不足\");\n" +
+    "        }\n" +
+    "        paidOrders.add(orderId);\n" +
+    "        userMoney.set(currentMoney.subtract(payAmount));\n" +
+    "        return R.ok(\"支付成功！订单：\" + orderId + \"，剩余余额：\" + userMoney.get());\n" +
+    "    }\n" +
+    "}";
+
 const vul4Pay = "@ApiOperation(\"支付流程绕过漏洞 - 创建订单\")\n" +
     "@RequestMapping(\"/vul4/create\")\n" +
     "public R createOrder(@RequestParam String orderId, @RequestParam double amount) {\n" +
