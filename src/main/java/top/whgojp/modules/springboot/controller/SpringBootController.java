@@ -35,81 +35,107 @@ public class SpringBootController {
     }
 
     @Value("${spring.datasource.url:jdbc:mysql://localhost:13306/JavaSecLab}")
+    String legacyUrl = "";
+    @Value("${spring.datasource.username:root}")
+    String legacyUsername = "";
+    @Value("${spring.datasource.password:QWE123qwe}")
+    String legacyPassword = "";
+    @Value("${spring.datasource.primary.url:}")
     String url = "";
-    @Value("${spring.datasource.username:jdbc:root}")
+    @Value("${spring.datasource.primary.username:}")
     String username = "";
-    @Value("${spring.datasource.password:jdbc:QWE123qwe}")
+    @Value("${spring.datasource.primary.password:}")
     String password = "";
 
     @RequestMapping("/jdbc")
     @ResponseBody
     public R jdbc() {
-        try {
-            Connection conn = DriverManager.getConnection(url, username, password);
+        try (Connection conn = DriverManager.getConnection(resolveUrl(), resolveUsername(), resolvePassword());
+             Statement stmt = conn.createStatement()) {
             String selectQuery = "SELECT malicious_object FROM objects WHERE id = 1";
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(selectQuery);
 
-            if (rs.next()) {
+            try (ResultSet rs = stmt.executeQuery(selectQuery)) {
+                if (!rs.next()) {
+                    return R.error("未找到恶意对象，请先点击“反序列化命令”插入测试数据");
+                }
                 byte[] maliciousObjectBytes = rs.getBytes("malicious_object");
-                // 反序列化恶意对象
-                ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(maliciousObjectBytes);
-                ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
-
-                MaliciousObject maliciousObject = (MaliciousObject) objectInputStream.readObject();
-
-                log.info("触发MYSQL-JBDC反序列化漏洞！");
+                if (maliciousObjectBytes == null || maliciousObjectBytes.length == 0) {
+                    return R.error("恶意对象内容为空");
+                }
+                try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(maliciousObjectBytes))) {
+                    objectInputStream.readObject();
+                }
             }
 
-            stmt.close();
-            conn.close();
-
+            log.info("触发MYSQL-JDBC反序列化漏洞！");
+            return R.ok("触发MYSQL-JDBC反序列化漏洞！");
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("触发MYSQL-JDBC反序列化漏洞失败", e);
+            return R.error("触发MYSQL-JDBC反序列化漏洞失败：" + e.getMessage());
         }
-        return R.ok("触发MYSQL-JBDC反序列化漏洞！");
     }
 
     @RequestMapping("/insert")
     @ResponseBody
     public R insertMaliciousObject(@RequestParam String command) {
-        try {
+        if (command == null || command.trim().isEmpty()) {
+            return R.error("命令不能为空");
+        }
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ObjectOutputStream oos = new ObjectOutputStream(baos)) {
             MaliciousObject maliciousObject = new MaliciousObject(command);
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
             oos.writeObject(maliciousObject);
             byte[] objectBytes = baos.toByteArray();
 
-            Connection conn = DriverManager.getConnection(url, username, password);
-            String insertQuery = "INSERT INTO objects (id, malicious_object) VALUES (?, ?)";
-            PreparedStatement stmt = conn.prepareStatement(insertQuery);
-            stmt.setInt(1, 1);
-            stmt.setBytes(2, objectBytes);
-            stmt.executeUpdate();
-            stmt.close();
-            conn.close();
+            try (Connection conn = DriverManager.getConnection(resolveUrl(), resolveUsername(), resolvePassword());
+                 PreparedStatement stmt = conn.prepareStatement("REPLACE INTO objects (id, malicious_object) VALUES (?, ?)")) {
+                stmt.setInt(1, 1);
+                stmt.setBytes(2, objectBytes);
+                stmt.executeUpdate();
+            }
 
             return R.ok("恶意对象插入成功！");
         } catch (Exception e) {
-            e.printStackTrace();
-            return R.error("恶意对象插入失败(主键冲突的话在请数据库中删除该记录)：" + e.getMessage());
+            log.error("恶意对象插入失败", e);
+            return R.error("恶意对象插入失败：" + e.getMessage());
         }
     }
 
     @RequestMapping("/vul")
     @ResponseBody
     public R vul(String url, String username, String password) {
+        if (url == null || url.trim().isEmpty()) {
+            return R.error("JDBC URL不能为空");
+        }
 
         try {
 //            Class.forName("com.mysql.jdbc.Driver");
-             Class.forName("com.mysql.cj.jdbc.Driver");
-            DriverManager.getConnection(url,username,password);
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            DriverManager.setLoginTimeout(5);
+            try (Connection ignored = DriverManager.getConnection(url, username, password)) {
+                return R.ok("JDBC连接请求已发送");
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("JDBC连接失败", e);
+            return R.error("JDBC连接失败：" + e.getMessage());
         }
-        return R.ok();
     }
 
+    private String resolveUrl() {
+        return isBlank(url) ? legacyUrl : url;
+    }
+
+    private String resolveUsername() {
+        return isBlank(username) ? legacyUsername : username;
+    }
+
+    private String resolvePassword() {
+        return isBlank(password) ? legacyPassword : password;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
 
 }

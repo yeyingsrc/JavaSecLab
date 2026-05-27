@@ -90,7 +90,7 @@ public class SecurityConfigurer extends WebSecurityConfigurerAdapter {
         permitAll.add("/other/**");
         permitAll.add("/ssrf/internal/**");
         permitAll.add("/ssrf/redirect");
-//        permitAll.add("/druid/**");
+        permitAll.add("/druid/**");
 //        permitAll.add("/ueditor/**");
         String[] urls = permitAll.stream().distinct().toArray(String[]::new);
 

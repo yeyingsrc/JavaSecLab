@@ -2136,7 +2136,7 @@ const springBootSwagger = "return new Docket(DocumentationType.OAS_30)\n" +
 const springBootActuator = "management:\n" +
     "  # 端点信息接口使用的端口，为了和主系统接口使用的端口进行分离\n" +
     "  server:\n" +
-    "    port: 8080\n" +
+    "    port: 80\n" +
     "  # 端点健康情况，默认值\"never\"，设置为\"always\"可以显示硬盘使用情况和线程情况\n" +
     "  endpoint:\n" +
     "    health:\n" +
@@ -2166,19 +2166,18 @@ const springBootActuator = "management:\n" +
     "jolokia  通过HTTP暴露JMX beans（当Jolokia在类路径上时，WebFlux不可用）  Yes\n" +
     "logfile  返回日志文件内容（如果设置了logging.file或logging.path属性的话），支持使用HTTP Range头接收日志文件内容的部分信息  Yes\n" +
     "prometheus  以可以被Prometheus服务器抓取的格式显示metrics信息  Yes";
-const springBootDruid = "druid:\n" +
-    "  ...\n" +
-    "  filters: stat,log4j     # wall 这里关闭sql防火墙\n" +
-    "  stat-view-servlet:\n" +
-    "    enabled: true\n" +
-    "    url-pattern: /druid/*\n" +
-    "#        login-username: admin\n" +
-    "#        login-password: admin\n" +
-    "    reset-enable: false\n" +
-    "  # 防火墙配置\n" +
-    "#      wall:\n" +
-    "#        config:\n" +
-    "#          multi-statement-allow: false"
+const springBootDruid = "@Configuration\n" +
+    "public class DruidMonitorConfig {\n" +
+    "    @Bean\n" +
+    "    public ServletRegistrationBean<StatViewServlet> druidStatViewServlet() {\n" +
+    "        ServletRegistrationBean<StatViewServlet> registrationBean =\n" +
+    "                new ServletRegistrationBean<>(new StatViewServlet(), \"/druid/*\");\n" +
+    "        registrationBean.addInitParameter(\"resetEnable\", \"false\");\n" +
+    "        return registrationBean;\n" +
+    "    }\n" +
+    "}\n" +
+    "\n" +
+    "// SecurityConfigurer 中放行 /druid/**，且未设置登录账号密码，会导致Druid监控台暴露。"
 
 const dirTraversal = 'public String listDirectory(String dir) {\n' +
     '    String staticFolderPath = sysConstant.getStaticFolder();\n' +
