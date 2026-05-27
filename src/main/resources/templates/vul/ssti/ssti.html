@@ -12,8 +12,8 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>  SSTI(Server Side Template Injection)：模板引擎是一种通过将模板中的占位符替换为实际数据来动态生成内容的工具，如HTML页面、邮件等。它简化了视图层的设计，但如果未对用户输入进行有效校验，可能导致安全风险如任意代码执行</pre>
-                        <pre>  Java中常用的模板引擎有Freemarker、Velocity、Thymeleaf等,在这里以Thymeleaf引擎为例</pre>
+                        <pre>  SSTI(Server Side Template Injection) 是不可信输入进入服务端模板解析上下文后，被模板引擎当作模板语法执行的问题。风险不只来自页面变量输出，也可能来自视图名、模板片段名、模板内容、邮件模板和报表模板等动态渲染入口。</pre>
+                        <pre>  本模块以 Thymeleaf 为例，重点演示 Spring MVC 返回视图名可控、URL 路径参数拼接进视图名两类触发方式。修复时应避免用户控制模板名或模板内容，确需动态选择模板时使用固定映射或白名单，并用 HttpServletResponse/@ResponseBody 等方式明确跳过视图解析。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -46,8 +46,8 @@
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
                                     <blockquote class="layui-elem-quote main_btn">
-                                        <p>攻击者可以操控return中的值，就有可能造成模板注入漏洞</p>
-                                        <a target="_blank" href="/ssti/vul1?para=__$%7bnew%20java.util.Scanner(T(java.lang.Runtime).getRuntime().exec(%27id%27).getInputStream()).next()%7d__::.x">
+                                        <p>攻击者可控 Controller 返回的视图名时，Thymeleaf 会先处理 <code>__${...}__</code> 预处理表达式，再解析模板名。</p>
+                                        <a target="_blank" href="/ssti/vul1?para=__$%7b7*7%7d__::.x">
                                             <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;">
                                                 <span class="iconfont icon-zhihang">Run</span>
                                             </button>
@@ -57,19 +57,8 @@
 
                                 <div class="layui-tab-item">
                                     <blockquote class="layui-elem-quote main_btn">
-                                        <p>当方法返回为void时，thymeleaf会以URL路由为视图名称，调用模板视图去解析</p>
-                                        <a target="_blank" href="/ssti/vul2/__$%7BT(java.lang.Runtime).getRuntime().exec('open%20-a%20Calculator')%7D__::.x">
-                                            <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;">
-                                                <span class="iconfont icon-zhihang">Run</span>
-                                            </button>
-                                        </a>
-                                    </blockquote>
-                                </div>
-
-                                <div class="layui-tab-item">
-                                    <blockquote class="layui-elem-quote main_btn">
-                                        <p>text/html：浏览器在获取到这种文件时会自动调用html的解析器对文件进行相应的处理</p>
-                                        <a target="_blank" href="ssti/vul3?para=__$%7bnew%20java.util.Scanner(T(java.lang.Runtime).getRuntime().exec(%27id%27).getInputStream()).next()%7d__::.x">
+                                        <p>URL 路径变量被拼接进 Controller 返回的视图名时，同样会进入 Thymeleaf 视图解析和预处理流程。</p>
+                                        <a target="_blank" href="/ssti/vul2/__$%7b7*7%7d__::.x">
                                             <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;">
                                                 <span class="iconfont icon-zhihang">Run</span>
                                             </button>
@@ -81,7 +70,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  高版本SpringBoot/Thymeleaf不存在模板注入问题，这里SpringBoot版本为2.4.1，Thymeleaf同上</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">  典型审计点是 Controller 返回的视图名、fragment 名或模板路径是否可被用户控制，例如 return "vul/ssti/" + para 或 return "vul/ssti/" + path。访问 __${7*7}__::.x 时，如果错误信息中的模板名变为 49，说明表达式已被 Thymeleaf 预处理执行。命令执行 payload 仅用于安全测试环境，日常验证优先使用 7*7 这类无副作用表达式。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -114,7 +103,7 @@
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
                                     <blockquote class="layui-elem-quote main_btn">
-                                        <p>基于白名单的路径校验</p>
+                                        <p>基于固定模板白名单选择视图，用户只能命中预定义模板名。</p>
                                         <a target="_blank" href="/ssti/safe1?para=__$%7bnew%20java.util.Scanner(T(java.lang.Runtime).getRuntime().exec(%27id%27).getInputStream()).next()%7d__::.x">
                                             <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;">
                                                 <span class="iconfont icon-zhihang">Run</span>
@@ -125,8 +114,8 @@
 
                                 <div class="layui-tab-item">
                                     <blockquote class="layui-elem-quote main_btn">
-                                        <p>控制器返回为void，方法参数设置为HttpServletResponse后,Spring MVC会跳过视图解析过程</p>
-                                        <a target="_blank" href="ssti/safe2/__$%7bnew%20java.util.Scanner(T(java.lang.Runtime).getRuntime().exec(%27id%27).getInputStream()).next()%7d__::.x">
+                                        <p>控制器写入 HttpServletResponse 后，Spring MVC 不再用 URL 路径推导视图名。</p>
+                                        <a target="_blank" href="/ssti/safe2/__$%7bnew%20java.util.Scanner(T(java.lang.Runtime).getRuntime().exec(%27id%27).getInputStream()).next()%7d__::.x">
                                             <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;">
                                                 <span class="iconfont icon-zhihang">Run</span>
                                             </button>
@@ -139,10 +128,10 @@
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
                                             <pre style="color: #28333e;font-size: 15px;">安全编码规范：
-  1、避免用户输入直接作为模板名称或路径
-  2、对所有动态内容进行严格校验和转义，包括模板变量
-  3、选择支持自动转义的安全模板引擎（如Thymeleaf的th:text）
-  4、使用白名单限制动态渲染的模板，控制可访问的模板范围</pre>
+  1、不要把用户输入拼接进模板名、模板路径、fragment 表达式或模板内容。
+  2、动态模板选择应使用枚举/白名单映射到固定模板，拒绝直接透传用户输入。
+  3、需要返回字符串内容时使用 @ResponseBody、ResponseEntity 或显式写入 HttpServletResponse，避免进入视图解析。
+  4、变量输出优先使用 th:text 等自动转义能力，th:utext 只用于可信 HTML 内容。</pre>
                                         </div>
                                     </div>
                                 </div>

@@ -928,6 +928,49 @@ SpEL 注入的本质是不可信输入进入表达式“可执行上下文”后
 | 阻断类型引用 | `GET /spel/safe?ex=T(java.lang.Math).abs(-1)` | Java 类型引用 | 返回“表达式被安全上下文限制”，说明类型引用被禁止 |
 | 阻断命令执行 | `GET /spel/safe?ex=T(java.lang.Runtime).getRuntime().exec('true')` | 命令执行表达式 | 返回“表达式被安全上下文限制”，不执行系统命令 |
 | 安全场景错误处理 | `GET /spel/safe?ex=T(java.lang.Runtime).getRuntime().exec(` | 语法错误表达式 | 返回“表达式被安全上下文限制”或解析错误信息 |
+
+## SSTI 模板注入
+
+当前覆盖 Thymeleaf 视图名注入两类典型触发方式：Controller 返回值可控、URL 路径参数拼接进视图名。模块重点演示不可信输入进入服务端模板解析上下文后，`__${...}__` 预处理表达式会先被 Thymeleaf 计算，再进入模板名或 fragment 解析流程。
+
+SSTI 的本质是不可信输入进入模板“可执行上下文”。在 Java Web 中风险入口不只包括页面内容，还包括视图名、fragment 表达式、邮件模板、报表模板、动态模板内容和多模板引擎配置。修复时应避免用户控制模板名、模板路径、fragment 或模板内容；动态选择模板时使用固定枚举/白名单映射；返回普通字符串时使用 `@ResponseBody`、`ResponseEntity` 或显式写入 `HttpServletResponse`，避免进入视图解析；变量输出优先使用自动转义能力，谨慎使用 `th:utext`。
+
+已覆盖类型
+
+| 分类 | 已有场景 | 结论 |
+| --- | --- | --- |
+| 返回视图名可控 | `/ssti/vul1?para=...` | 覆盖 Controller 直接把用户输入拼接进视图名，Thymeleaf 预处理表达式被执行 |
+| URL 路径拼接视图名 | `/ssti/vul2/{path}` | 覆盖路径变量被拼接进视图名后触发 Thymeleaf 预处理表达式 |
+| 白名单模板选择 | `/ssti/safe1?para=...` | 覆盖只允许固定模板名，拒绝表达式进入模板路径 |
+| 跳过视图解析 | `/ssti/safe2/{path}` | 覆盖显式写入响应体后不再触发 Thymeleaf 视图解析 |
+| 内容输出边界 | `/ssti/vul3?para=...` | 当前仅通过 `th:utext` 输出字符串，不会把输入当模板表达式执行，应归类为 HTML 输出/XSS 边界而非 SSTI 主场景 |
+
+模块覆盖基本符合综合性靶场定位，适合作为 Thymeleaf 视图名 SSTI 专题。后续如需增强，可补充“Freemarker 模板内容注入”“Velocity 模板注入”“Thymeleaf fragment 表达式注入”“邮件/通知模板可控”“模板缓存与模板加载器路径穿越”“沙箱绕过与安全配置对照”等场景。当前 `vul3` 与 SSTI 主线存在边界差异，建议保留为说明或移到 XSS/模板输出边界，不作为核心 SSTI 漏洞统计。
+
+### SSTI 漏洞场景测试
+
+页面：`/ssti`
+
+| 场景 | 请求 | 测试输入 | 预期结果 |
+| --- | --- | --- | --- |
+| 页面访问 | `GET /ssti` | 已登录会话 | 页面正常打开，展示 return 可控、URL 可控和安全对照场景 |
+| return 可控算术探测 | `GET /ssti/vul1?para=__${7*7}__::.x` | Thymeleaf 预处理表达式 | 返回 500，错误信息中的模板名包含 `vul/ssti/49`，说明表达式已执行 |
+| return 可控命令链路 | `GET /ssti/vul1?para=__${new java.util.Scanner(T(java.lang.Runtime).getRuntime().exec('id').getInputStream()).next()}__::.x` | 安全测试命令 `id` | 返回 500，错误信息中的模板名被替换为命令输出片段，说明可触达命令执行 Sink |
+| URL 可控算术探测 | `GET /ssti/vul2/__${7*7}__::.x` | Thymeleaf 预处理表达式 | 返回 500，错误信息中的模板名包含 `vul/ssti/49`，说明表达式已执行 |
+| 内容输出边界 | `GET /ssti/vul3?para=__${7*7}__::.x` | 模板表达式字符串 | 页面原样输出 `__${7*7}__::.x`，不执行表达式 |
+| return 流量包下载 | `GET /other/datapackage/ssti/ssti_return.pcapng` | 无 | 返回可下载流量包 |
+| URL 流量包下载 | `GET /other/datapackage/ssti/ssti_url.pcapng` | 无 | 返回可下载流量包 |
+
+### SSTI 安全场景测试
+
+页面：`/ssti`
+
+| 场景 | 请求 | 测试输入 | 预期结果 |
+| --- | --- | --- | --- |
+| 白名单允许模板 | `GET /ssti/safe1?para=ssti` | 白名单模板名 | 返回 SSTI 模块页面 |
+| 白名单拒绝表达式 | `GET /ssti/safe1?para=__${7*7}__::.x` | Thymeleaf 预处理表达式 | 返回 401 页面，表达式不进入视图名 |
+| 跳过视图解析 | `GET /ssti/safe2/__${7*7}__::.x` | Thymeleaf 预处理表达式 | 返回纯文本“已跳过视图解析...”，不触发 Thymeleaf 解析 |
+
 ## 反序列化
 
 当前覆盖 Java 原生 `ObjectInputStream.readObject()`、SnakeYAML `Yaml.load()`、XMLDecoder `readObject()` 三类 Java 反序列化入口。模块重点演示“不可信数据恢复为对象”时，攻击者如何通过对象图、类型标签、构造器、setter、`readObject` 或组件 gadget 链，把普通数据解析入口升级为代码执行、类加载、文件操作或拒绝服务风险。

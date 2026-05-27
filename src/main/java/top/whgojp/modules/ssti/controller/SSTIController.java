@@ -5,18 +5,12 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.expression.EvaluationContext;
-import org.springframework.expression.Expression;
-import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.SimpleEvaluationContext;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import top.whgojp.common.utils.R;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -49,8 +43,9 @@ public class SSTIController {
         return "vul/ssti/" + para;
     }
     @GetMapping("/vul2/{path}")
-    public void vul2(@PathVariable String path) {
-        log.info("SSTI注入："+path);
+    public String vul2(@PathVariable String path) {
+        log.info("SSTI注入：" + path);
+        return "vul/ssti/" + path;
     }
     @GetMapping("/vul3")
     public String vul3(@ApiParam(name = "para", value = "用户输入参数", required = true) @RequestParam String para, Model model) {
@@ -62,14 +57,16 @@ public class SSTIController {
     public String safe1(@ApiParam(name = "para", value = "用户输入参数", required = true) @RequestParam String para, Model model) {
         List<String> white_list = new ArrayList<>(Arrays.asList("vul", "ssti"));
         if (white_list.contains(para)){
-            return "vul/ssti" + para;
+            return "vul/ssti/" + para;
         } else{
             return "common/401";
         }
     }
     @GetMapping("/safe2/{path}")
-    public void safe2(@PathVariable String path, HttpServletResponse response) {
-        log.info("SSTI注入："+path);
+    public void safe2(@PathVariable String path, HttpServletResponse response) throws IOException {
+        log.info("SSTI注入：" + path);
+        response.setContentType("text/plain;charset=UTF-8");
+        response.getWriter().write("已跳过视图解析，输入路径：" + path);
     }
 
 
