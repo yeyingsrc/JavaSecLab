@@ -28,7 +28,7 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>  JavaScript加密主要用于确保数据在传输和存储过程中的安全性，防止敏感信息被未授权方窃取或篡改……</pre>
+                        <pre>  这里以请求签名和前端RSA加密为例，演示把安全边界建立在前端算法、固定密钥或可逆向代码上时，攻击者仍可复现请求并绕过校验。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -69,7 +69,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  增加签名(sign)可以防止请求篡改、重放攻击以及恶意API调用，但是当sign生成复杂度较低时(简单的哈希算法和时间戳),可以通过逆向分析JS代码(例如generateSign函数)，伪造sign参数从而绕过验证</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">  请求签名能提高伪造成本，但如果签名密钥写在前端、算法只是固定参数拼接后MD5，攻击者通过逆向JS即可复现sign。修复时签名密钥应只存在服务端，并结合随机数、时间窗口、重放缓存和服务端业务鉴权。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -134,7 +134,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  攻击者可以通过获取公钥伪造数据，绕过后端的逻辑处理……</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">  前端RSA加密只能保护传输内容不被直接明文观察，不能证明请求来自可信前端。公钥天然可公开，攻击者拿到公钥后同样可以加密任意账号密码并调用接口。修复时应依赖HTTPS、服务端认证、风控和重放防护，不能把“前端加密”当作访问控制。</pre>
                                         </div>
                                     </div>
                                 </div>

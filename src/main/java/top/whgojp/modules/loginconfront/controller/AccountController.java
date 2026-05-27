@@ -2,7 +2,6 @@ package top.whgojp.modules.loginconfront.controller;
 
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.regexp.RE;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,8 +25,8 @@ import java.util.Set;
 @RequestMapping("/loginconfront/account")
 public class AccountController {
     // 测试账号密码
-    final Set<String> REAL_USERNAMES = new HashSet<>(Arrays.asList("admin", "test", "12345", "root"));
-    final String REAL_PASSWORD = "admin123";
+    private static final Set<String> REAL_USERNAMES = new HashSet<>(Arrays.asList("admin", "test", "12345", "root"));
+    private static final String REAL_PASSWORD = "admin123";
 
     @RequestMapping("")
     public String account() {
@@ -37,6 +36,9 @@ public class AccountController {
     @RequestMapping("/vul1")
     @ResponseBody
     public R vul1(String username, String password) {
+        if (username == null || username.trim().isEmpty() || password == null) {
+            return R.error("用户名或密码不能为空！");
+        }
         if (REAL_USERNAMES.contains(username)) {
             if (REAL_PASSWORD.equalsIgnoreCase(password)) {
                 return R.ok("登录成功！用户名：" + username + ", 密码：" + password);
@@ -51,6 +53,9 @@ public class AccountController {
     @RequestMapping("/vul2")
     @ResponseBody
     public R vul2(String username, String password) {
+        if (username == null || username.trim().isEmpty() || password == null) {
+            return R.error("用户名或密码不能为空！");
+        }
         // 这里简单模拟下数据库查询操作
         // User user = UserService.getAllByUsernameAndPassword(username,password)
         if ("admin".equalsIgnoreCase(username) && "admin".equalsIgnoreCase(password)) {

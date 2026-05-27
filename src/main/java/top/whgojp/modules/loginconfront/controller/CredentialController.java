@@ -1,7 +1,6 @@
 package top.whgojp.modules.loginconfront.controller;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import top.whgojp.common.utils.R;
 
 import javax.crypto.spec.SecretKeySpec;
-import javax.servlet.http.HttpSession;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 
@@ -34,7 +32,6 @@ public class CredentialController {
     // 生成一个符合HS256要求的强密钥（至少256位）
     @Value("${jwt.key}")
     String secretKey = "f3a4c6d5b9bfeff28b1f529b0840134bcd4183474e2d4a97c05615a134e4f4da";
-    Key key = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
 
 //    Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
@@ -44,7 +41,7 @@ public class CredentialController {
         String jwt = Jwts.builder()
                 .setSubject(username)
                 .claim("role", role)
-                .signWith(key)
+                .signWith(jwtKey())
                 .compact();
         log.info("生成的JWT: " + jwt);
         return R.ok(jwt);
@@ -52,16 +49,19 @@ public class CredentialController {
 
     @RequestMapping("/vul1")
     @ResponseBody
-    public R vul1(@RequestHeader("Auth_Token") String jwt) {  // 从请求头获取 JWT
+    public R vul1(@RequestHeader(value = "Auth_Token", required = false) String jwt) {  // 从请求头获取 JWT
+        if (jwt == null || jwt.trim().isEmpty()) {
+            return R.error("缺少Auth_Token请求头");
+        }
         log.info("获取到的JWT：" + jwt);
         try {
             String user = Jwts.parser()
-                    .setSigningKey(key)
+                    .setSigningKey(jwtKey())
                     .parseClaimsJws(jwt)
                     .getBody()
                     .getSubject();
             String role = Jwts.parserBuilder()
-                    .setSigningKey(key)
+                    .setSigningKey(jwtKey())
                     .build()
                     .parseClaimsJws(jwt)
                     .getBody()
@@ -78,6 +78,10 @@ public class CredentialController {
     @RequestMapping("/vul2")
     public R vul2() {
         return R.ok();
+    }
+
+    private Key jwtKey() {
+        return new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
     }
 
 }

@@ -12,7 +12,7 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>  这里以用户名枚举、弱口令为例，验证码等相关问题详见逻辑漏洞模块</pre>
+                        <pre>  这里以用户名枚举、弱口令为例，演示认证阶段信息暴露和口令强度不足带来的账号接管风险。验证码等相关问题详见逻辑漏洞模块。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -53,7 +53,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  这里以本项目中Spring Security配置为例，实现UserDetailsService需要重写loadUserByUsername方法,return返回的内容如果是"用户名不存在"，则攻击者可以根据返回内容进行枚举用户名，根据存活用户名进行下一步密码爆破</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">  登录失败时分别返回“用户不存在”和“密码错误”，会暴露账号是否存在。攻击者可先枚举有效用户名，再对有效账号做密码爆破。修复时应统一失败提示、控制登录频率，并记录异常登录行为。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -118,7 +118,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">  尽管现代Web应用采用了多种安全架构、编码规范和框架，并部署了防火墙、IDS/IPS等安全防护措施，弱口令(如测试账号、默认密码、常见密码)依然是一个普遍的安全隐患。攻击者可以通过简单的暴力破解或字典(社工收集)攻击轻松突破认证。事实上，许多攻防演练的突破口仍然集中在弱口令……</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">  弱口令是认证体系中最常见的低成本突破口。默认密码、测试账号密码、常见字典口令会被自动化工具快速命中。修复时应启用强密码策略、默认口令强制修改、泄露密码库检测、多因素认证和登录失败限速。</pre>
                                         </div>
                                     </div>
                                 </div>
