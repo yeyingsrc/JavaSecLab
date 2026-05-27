@@ -5,6 +5,7 @@
     .layui-card {
         border: 1px solid #f2f2f2;
         border-radius: 5px;
+        box-shadow: 0 1px 6px rgba(15, 23, 42, .04);
     }
 
     .icon {
@@ -14,6 +15,17 @@
 
     .custom-a {
         background-color: #f8f8f8;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        transition: all .2s;
+    }
+
+    .custom-a:hover,
+    .custom-a-two:hover,
+    .custom-a-five:hover {
+        border-color: #1e9fff;
+        box-shadow: 0 2px 8px rgba(30, 159, 255, .12);
+        transform: translateY(-1px);
     }
 
     .icon-blue {
@@ -45,10 +57,12 @@
         top: 2px;
         display: block;
         color: #666;
-        text-overflow: ellipsis;
         overflow: hidden;
-        white-space: nowrap;
-        font-size: 14px;
+        white-space: normal;
+        font-size: 13px;
+        line-height: 18px;
+        height: 36px;
+        word-break: keep-all;
     }
 
     .layuimini-qiuck-module-five {
@@ -96,10 +110,12 @@
         top: 2px;
         display: block;
         color: #666;
-        text-overflow: ellipsis;
         overflow: hidden;
-        white-space: nowrap;
-        font-size: 10px;
+        white-space: normal;
+        font-size: 12px;
+        line-height: 18px;
+        height: 36px;
+        word-break: keep-all;
     }
 
     .layuimini-qiuck-module-two a cite {
@@ -107,30 +123,40 @@
         top: 2px;
         display: block;
         color: #666;
-        text-overflow: ellipsis;
         overflow: hidden;
-        white-space: nowrap;
-        font-size: 14px;
+        white-space: normal;
+        font-size: 13px;
+        line-height: 18px;
+        height: 36px;
+        word-break: keep-all;
     }
 
     .custom-a-five {
         background-color: #f8f8f8;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        transition: all .2s;
         /*width: 80%;*/
     }
 
     .custom-a-two {
         background-color: #f8f8f8;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        transition: all .2s;
         /*width: 80%;*/
     }
 
     .welcome-module-five {
         width: 100%;
-        height: 70px;
+        min-height: 70px;
+        height: auto;
     }
 
     .welcome-module-two {
         width: 100%;
-        height: 70px;
+        min-height: 70px;
+        height: auto;
     }
 
     .welcome-module-five .layui-row {
@@ -154,7 +180,7 @@
     }
 
     .layuimini-qiuck-module-two {
-        flex: 1 1 18%; /* 使子元素均分宽度，每个占18% */
+        flex: 1 1 45%; /* RCE双入口均分宽度 */
         box-sizing: border-box; /* 包含padding和border在内的宽度 */
         text-align: center;
         margin-top: 10px;
@@ -163,19 +189,143 @@
 
     .welcome-module {
         width: 100%;
-        height: 70px;
+        min-height: 70px;
+        height: auto;
     }
 
     .main_btn > p {
         height: 40px;
+    }
+
+    .home-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 15px;
+        padding: 14px 16px;
+        background: #fff;
+        border: 1px solid #f2f2f2;
+        border-radius: 6px;
+        box-shadow: 0 1px 6px rgba(15, 23, 42, .04);
+    }
+
+    .home-title {
+        min-width: 240px;
+    }
+
+    .home-title h2 {
+        margin: 0 0 6px;
+        font-size: 20px;
+        font-weight: 600;
+        color: #303133;
+    }
+
+    .home-title p {
+        margin: 0;
+        color: #777;
+        font-size: 13px;
+    }
+
+    .home-search {
+        width: 360px;
+        max-width: 45%;
+    }
+
+    .home-stats {
+        display: flex;
+        gap: 10px;
+    }
+
+    .home-stat {
+        min-width: 82px;
+        padding: 8px 12px;
+        background: #f8fbff;
+        border: 1px solid #e8f3ff;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    .home-stat strong {
+        display: block;
+        color: #1e9fff;
+        font-size: 18px;
+        line-height: 22px;
+    }
+
+    .home-stat span {
+        color: #777;
+        font-size: 12px;
+    }
+
+    .module-hidden {
+        display: none !important;
+    }
+
+    .module-empty {
+        display: none;
+        margin-bottom: 15px;
+        padding: 16px;
+        color: #777;
+        text-align: center;
+        background: #fff;
+        border: 1px dashed #d9d9d9;
+        border-radius: 6px;
+    }
+
+    .module-cards {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 15px;
+    }
+
+    .module-cards > .layui-col-md6 {
+        width: auto;
+        padding: 0 !important;
+        float: none;
+    }
+
+    @media screen and (max-width: 992px) {
+        .home-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .home-search {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .home-stats {
+            justify-content: space-between;
+        }
+
+        .module-cards {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
 <body>
 <div class="layuimini-container">
     <div class="layuimini-main">
+        <div class="home-toolbar">
+            <div class="home-title">
+                <h2>JavaSecLab 漏洞靶场</h2>
+                <p>按漏洞类型快速进入场景，支持模块名、关键词和英文缩写检索。</p>
+            </div>
+            <div class="home-search">
+                <input id="moduleSearch" type="text" class="layui-input" placeholder="搜索模块，如 SQL、SSTI、反序列化、Fastjson">
+            </div>
+            <div class="home-stats">
+                <div class="home-stat"><strong>10</strong><span>漏洞分类</span></div>
+                <div class="home-stat"><strong>37+</strong><span>功能场景</span></div>
+                <div class="home-stat"><strong>V1.5</strong><span>当前版本</span></div>
+            </div>
+        </div>
+        <div id="moduleEmpty" class="module-empty">没有找到匹配模块，试试 SQL、RCE、SSTI、登录、组件 等关键词。</div>
         <div class="layui-row layui-col-space15">
-            <div class="layui-col-md6">
+            <div class="layui-col-md6 module-cards">
                 <div class="layui-col-md6">
                     <div class="layui-card">
                         <div class="layui-card-header">
@@ -332,81 +482,44 @@
                 </div>
 
                 <div class="layui-col-md6">
-                    <div class="layui-col-md6">
-                        <div class="layui-card">
-                            <div class="layui-card-header">
-                                <span class="iconfont icon-minglingzhihang icon icon-blue"></span>
-                                RCE
-                            </div>
-
-                            <div class="layui-card-body">
-                                <div class="welcome-module-two">
-                                    <div class="layui-row layui-col-space10">
-                                        <div class="layui-col-xs3 layuimini-qiuck-module-two">
-                                            <div class="custom-a-two">
-                                                <a href="javascript:;" layuimini-content-href="command"
-                                                   data-title="命令注入">
-                                                    <span class="iconfont icon-minglingzhihang"></span>
-                                                    <cite>命令注入</cite>
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <div class="layui-col-xs3 layuimini-qiuck-module-two">
-                                            <div class="custom-a-two">
-                                                <a href="javascript:;" layuimini-content-href="code"
-                                                   data-title="代码注入">
-                                                    <span class="iconfont icon-minglingzhihang"></span>
-                                                    <cite>代码注入</cite>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
+                    <div class="layui-card">
+                        <div class="layui-card-header">
+                            <span class="iconfont icon-minglingzhihang icon icon-blue"></span>
+                            RCE
                         </div>
-                    </div>
-                    <div class="layui-col-md6">
-                        <div class="layui-card">
-                            <div class="layui-card-header">
-                                <span class="iconfont icon-luojiloudongjiance icon icon-blue"></span>
-                                逻辑漏洞
-                            </div>
-                            <div class="layui-card-body">
-                                <div class="welcome-module-two">
-                                    <div class="layui-row layui-col-space10">
-                                        <div class="layui-col-xs3 layuimini-qiuck-module-two">
-                                            <div class="custom-a-two">
-                                                <a href="javascript:;" layuimini-content-href="logic/idor/horizontal"
-                                                   data-title="越权漏洞">
-                                                    <span class="iconfont icon-24gl-swapHorizontal3"></span>
-                                                    <cite>越权漏洞</cite>
-                                                </a>
-                                            </div>
+
+                        <div class="layui-card-body">
+                            <div class="welcome-module-two">
+                                <div class="layui-row layui-col-space10">
+                                    <div class="layui-col-xs6 layuimini-qiuck-module-two">
+                                        <div class="custom-a-two">
+                                            <a href="javascript:;" layuimini-content-href="command"
+                                               data-title="命令注入">
+                                                <span class="iconfont icon-minglingzhihang"></span>
+                                                <cite>命令注入</cite>
+                                            </a>
                                         </div>
-                                        <div class="layui-col-xs3 layuimini-qiuck-module-two">
-                                            <div class="custom-a-two">
-                                                <a href="javascript:;"
-                                                   layuimini-content-href="logic/pay"
-                                                   data-title="支付漏洞">
-                                                    <span class="iconfont icon-zhifu"></span>
-                                                    <cite>支付漏洞</cite>
-                                                </a>
-                                            </div>
+                                    </div>
+                                    <div class="layui-col-xs6 layuimini-qiuck-module-two">
+                                        <div class="custom-a-two">
+                                            <a href="javascript:;" layuimini-content-href="code"
+                                               data-title="代码注入">
+                                                <span class="iconfont icon-minglingzhihang"></span>
+                                                <cite>代码注入</cite>
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
 
                 <div class="layui-col-md6">
-
                     <div class="layui-card">
                         <div class="layui-card-header">
                             <span class="iconfont icon-qita icon icon-blue"></span>
+                            请求交互安全
                         </div>
                         <div class="layui-card-body">
                             <div class="welcome-module">
@@ -444,6 +557,59 @@
                                                data-title="跨源安全">
                                                 <span class="iconfont icon-origin"></span>
                                                 <cite>跨源安全</cite>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="layui-col-md6">
+
+                    <div class="layui-card">
+                        <div class="layui-card-header">
+                            <span class="iconfont icon-luojiloudongjiance icon icon-blue"></span>
+                            逻辑漏洞
+                        </div>
+                        <div class="layui-card-body">
+                            <div class="welcome-module">
+                                <div class="layui-row layui-col-space10">
+                                    <div class="layui-col-xs3 layuimini-qiuck-module">
+                                        <div class="custom-a">
+                                            <a href="javascript:;" layuimini-content-href="logic/idor/horizontal"
+                                               data-title="越权漏洞">
+                                                <span class="iconfont icon-24gl-swapHorizontal3"></span>
+                                                <cite>越权漏洞</cite>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="layui-col-xs3 layuimini-qiuck-module">
+                                        <div class="custom-a">
+                                            <a href="javascript:;"
+                                               layuimini-content-href="logic/pay"
+                                               data-title="支付漏洞">
+                                                <span class="iconfont icon-zhifu"></span>
+                                                <cite>支付漏洞</cite>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="layui-col-xs3 layuimini-qiuck-module">
+                                        <div class="custom-a">
+                                            <a href="javascript:;" layuimini-content-href="logic/concurrent"
+                                               data-title="并发安全">
+                                                <span class="iconfont icon-gaobingfa"></span>
+                                                <cite>并发安全</cite>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="layui-col-xs3 layuimini-qiuck-module">
+                                        <div class="custom-a">
+                                            <a href="javascript:;" layuimini-content-href="logic/captcha/graphic"
+                                               data-title="验证码安全">
+                                                <span class="iconfont icon-yanzhengma"></span>
+                                                <cite>验证码安全</cite>
                                             </a>
                                         </div>
                                     </div>
@@ -746,7 +912,7 @@
                     <li class="layui-timeline-item">
                         <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
                         <div class="layui-timeline-content layui-text">
-                            <h3 class="layui-timeline-title">V1.4</h3>
+                            <h3 class="layui-timeline-title">V1.5</h3>
                             <p>支持漏洞模块：</p>
                             <ul>
                                 <li>跨站脚本攻击、跨站请求伪造、CORS、JSONP、URL重定向、XFF伪造、拒绝服务、XPATH注入</li>
@@ -793,9 +959,42 @@
 
         miniTab.listen();
 
+        var moduleLinks = $('.layuimini-main a[layuimini-content-href]');
+        $('#moduleSearch').on('input', function () {
+            var keyword = $.trim($(this).val()).toLowerCase();
+            var visibleCount = 0;
+
+            moduleLinks.each(function () {
+                var link = $(this);
+                var text = [
+                    link.text(),
+                    link.attr('data-title'),
+                    link.attr('layuimini-content-href')
+                ].join(' ').toLowerCase();
+                var item = link.closest('.layuimini-qiuck-module, .layuimini-qiuck-module-two, .layuimini-qiuck-module-five');
+                var matched = !keyword || text.indexOf(keyword) > -1;
+
+                item.toggleClass('module-hidden', !matched);
+                if (matched) {
+                    visibleCount++;
+                }
+            });
+
+            $('.layui-card').each(function () {
+                var card = $(this);
+                if (card.find('.layuimini-qiuck-module, .layuimini-qiuck-module-two, .layuimini-qiuck-module-five').length > 0) {
+                    card.toggleClass('module-hidden', card.find('.layuimini-qiuck-module:not(.module-hidden), .layuimini-qiuck-module-two:not(.module-hidden), .layuimini-qiuck-module-five:not(.module-hidden)').length === 0);
+                }
+            });
+
+            $('#moduleEmpty').toggle(visibleCount === 0);
+        });
+
         // echarts 窗口缩放自适应
         window.onresize = function () {
-            echartsRecords.resize();
+            if (typeof echartsRecords !== 'undefined') {
+                echartsRecords.resize();
+            }
         }
 
     });

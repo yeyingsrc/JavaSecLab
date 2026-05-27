@@ -1,172 +1,201 @@
-# ![](./pic/logo.png)JavaSecLab—A comprehensive Java vulnerability platform
+# ![](./pic/logo.png) JavaSecLab - A Comprehensive Java Vulnerability Lab
 
 <div align="center">
   <a href="https://www.apache.org/licenses/LICENSE-2.0.html"><img src="https://img.shields.io/github/license/alibaba/transmittable-thread-local?color=blueviolet&logo=apache" alt="License"></a>
-  <a href="https://github.com/whgojp/JavaSecLab"><img alt="Release" src="https://img.shields.io/badge/Java-8-ff9900?logo=java"></a>
-  <a href="https://github.com/whgojp/JavaSecLab"><img src="https://img.shields.io/badge/Version-1.4-red.svg" alt="Version"></a>
+  <a href="https://github.com/whgojp/JavaSecLab"><img alt="Java" src="https://img.shields.io/badge/Java-8-ff9900?logo=java"></a>
+  <a href="https://github.com/whgojp/JavaSecLab"><img src="https://img.shields.io/badge/Version-1.5-red.svg" alt="Version"></a>
   <a href="https://blog.csdn.net/weixin_53009585"><img src="https://img.shields.io/badge/Developed%20by-whgojp-purple.svg" alt="Developed by whgojp"></a>
-    <img src="https://img.shields.io/github/stars/whgojp/JavaSecLab?color=brightgreen&style=flat-square" alt="GitHub Repo stars">
+  <img src="https://img.shields.io/github/stars/whgojp/JavaSecLab?color=brightgreen&style=flat-square" alt="GitHub Repo stars">
   <img src="https://img.shields.io/github/forks/whgojp/JavaSecLab?style=blue" alt="GitHub forks">
 </div>
 
-
-[中文文档😊](./README_ZH.md)
+[中文文档](./README_ZH.md)
 
 ----------------------------------------
 
-## Project introduction
-​	JavaSecLab is **the most comprehensive Java vulnerability platform **, providing related vulnerability defect code, repair code, vulnerability scenarios, audit SINK point, security coding specifications, vulnerability traffic analysis, covering a variety of vulnerability scenarios, user-friendly interaction UI......
+## Overview
 
-![image-20241020143155383](./pic/home.png)
+JavaSecLab is a comprehensive Java vulnerability lab for application security learning, code audit practice, secure development training, and security tool evaluation. Built on Spring Boot, it provides vulnerable code, fixed implementations, realistic attack scenarios, audit-oriented source and sink notes, remediation guidance, secure coding explanations, and traffic-analysis examples.
+
+The goal is practical: help users understand not only how a vulnerability is exploited, but also why it exists in code and how it should be fixed.
+
+![home](./pic/home.png)
 
 ![show](./pic/show.png)
 
-## public-facing
+## Who Is It For?
 
-- Security services: Help security service personnel understand the principle of vulnerability (generation, repair, audit), and corresponding vulnerability traffic analysis
+- **Security service teams**: explain vulnerability causes, exploitation paths, fixes, audit flows, and traffic patterns.
+- **Enterprise security teams**: use it for SDL, DevSecOps, secure development training, and security awareness programs.
+- **Security researchers**: test SAST, DAST, IAST, RASP, SCA, xAST, reachability analysis, and other security tools.
+- **Java developers**: learn common application security issues from real code instead of abstract checklists.
 
-- Party A's security: It can be used as a development security training demonstration, a friendly interactive way to help R & D students more easily understand the vulnerability
+## Vulnerability Modules
 
-- Security research: Different trigger scenarios for various vulnerabilities can be used for testing security tools such as xAST
+JavaSecLab covers a wide range of Java web security scenarios, including:
 
+- XSS, CSRF, CORS, JSONP, URL redirection, XFF spoofing, denial of service, and XPath injection
+- SQL injection, arbitrary file read/upload/download/delete, SSRF, XXE, and RCE
+- Business logic flaws: IDOR, captcha security, payment security, and concurrency security
+- Sensitive information disclosure, login confrontation, request signing, and JWT credential security
+- SpEL injection, SSTI, and Java deserialization
+- Fastjson, Jackson, XStream, Log4j2, Shiro, SnakeYAML, XMLDecoder, and other component/ecosystem cases
+- Spring Boot ecosystem exposure: Swagger, Actuator, Druid, MySQL JDBC deserialization, and more
 
-## Support vulnerability module
+## Online Demo
 
-- Cross-site scripting attacks, cross-site request forgery, CORS, JSONP, URL redirection, XFF forgery, denial of service, XPATH injection
+Demo site: <http://whgojp.top/>
 
-- SQL Injection, arbitrary file family, cross-server request forgery, XML entity injection, RCE
+Default account: `admin/admin`
 
-- Logic vulnerabilities (IDOR, verification code security, payment security, concurrency security), sensitive information leakage series, login antagonism series
+> JavaSecLab is intentionally vulnerable and contains dangerous endpoints, vulnerable dependencies, and insecure configurations. Run your own deployment only in an isolated environment. Do not expose it directly to the public internet.
 
-- SPEL injection, SSTI injection, deserialization, component vulnerabilities
+## Why This Project Exists
 
+The author has worked in enterprise security roles and experienced the full vulnerability lifecycle. After penetration tests or security assessments, vulnerabilities are often assigned to development teams through systems such as TAPD or Jira. In practice, two questions come up repeatedly:
 
-## Online environment experience
+1. Why is this behavior a vulnerability?
+2. How should this vulnerability be fixed?
 
-http://whgojp.top/
+JavaSecLab was created to connect vulnerability behavior, vulnerable code, remediation approaches, and audit thinking. Compared with a text-only report or a PoC, the project emphasizes understanding vulnerabilities from the code perspective.
 
-Account password: admin/admin
+In code auditing, a common workflow is to locate a **sink** first, such as command execution, SQL execution, file access, template rendering, deserialization, or response output. The auditor then traces backward to identify the corresponding **source**, such as request parameters, headers, cookies, uploaded files, serialized data, or database content. Many JavaSecLab scenarios are designed around this source-to-sink path, making them useful for both learning and tool verification.
 
-## Project inspiration
+The same vulnerability type often appears through multiple trigger paths in real systems. JavaSecLab therefore provides multiple scenarios for core vulnerability classes where possible, so users can compare how different coding patterns, framework features, and business flows affect risk.
 
-​	**I have worked in Party A's unit for a period of time, and had access to the complete vulnerability life cycle ** : After completing penetration tests many times, I sent work orders (TAPD, Jira) to notify the R&D students to fix the vulnerability, and I often faced some problems: **1, the R&D did not know why this was a vulnerability? 2, R&D does not know how to fix this vulnerability? **
-​	Thus, an idea 💡 arises spontaneously, and I happen to know some development knowledge, wondering whether I can let the R & D students quickly understand the generation and repair of loopholes through the way of code...
+## Traffic Analysis
 
-> The platform provides security coding specifications for relevant vulnerabilities, and Party A friends can consider joining the development of security training when doing SDL/DevSecOps construction
-
-​	In addition, I have also done security service projects, I think most of my friends will be with me, just according to the information collection -> network -> Discovery of vulnerabilities -> output report this process test, for how the vulnerability is generated, how to repair, it seems not concerned...
-
-​	In the process of code audit, it is common to locate the SINK point (that is, the key location of code execution or output) and then backtrack to find the corresponding SOURCE point (that is, the location of the input or data source). The code audit is done by concatenating the SOURCE and SINK points
-
-> For each vulnerability, the platform provides the corresponding defect code and various security repair methods (such as: 1, upgrade repair 2, non-upgrade repair). At the same time, for code audit, the platform also provides the SINK point of related vulnerabilities
-
-​	Later, contact with application security products, SCA, SAST, DAST, RASP, etc., looking at security vulnerabilities seems to be another Angle, for customers, the purchase of security tools, whether it is scanning source code, containers, images... Of course, I also hope to less false positives, the author has more or less access to accessibility analysis and other related technologies, the project has also written different trigger scenarios for each vulnerability, interested friends can test it...
-
-> The platform provides multiple trigger scenarios for the same vulnerability
-
-🆕 update the vulnerability traffic analysis module to facilitate teachers' reference and learning. Take the vulnerability traffic of this project as an example. If you have better vulnerability traffic packets, welcome to submit PR to participate in the project 🌹
+JavaSecLab includes vulnerability traffic-analysis examples to help learners connect request/response behavior with code execution. Contributions with clearer packets, better reproduction notes, or additional analysis examples are welcome.
 
 ![flow1](./pic/flow1.png)
 
-Here, take delayed injection as an example: the traffic characteristic can be clearly seen from the response time: the server responds after 5 seconds
+For example, in a time-based SQL injection scenario, the traffic pattern can be observed through response latency: the server responds after roughly five seconds.
 
 ![flow2](./pic/flow2.png)
 
-## Technical architecture
+## Tech Stack
 
-​	SpringBoot + Spring Security + MyBatis + Thymeleaf + Layui
+- Spring Boot
+- Spring Security
+- MyBatis / MyBatis-Plus
+- JPA / Hibernate
+- Thymeleaf
+- Layui
+- MySQL
 
-## Deployment mode
+## Deployment
 
-clone the project code first
+Clone the repository:
 
 ```shell
 git clone https://github.com/whgojp/JavaSecLab.git
+cd JavaSecLab
 ```
 
-![image-20240905230400930](./pic/git-clone.png)
+![git clone](./pic/git-clone.png)
 
-### Local deployment -IDEA
+### Local Deployment with IDEA
 
-> JDK Environment 1.8
+Requirements:
 
-1. Configuration Database (**Mysql 8.0+**)
+- JDK 8
+- MySQL 8.0+
+- Maven
 
-   Execute the sql/JavaSecLab.sql file
-
-   Modify the configuration file application.yml active to dev(the project default is docker if there is a database connection error during the construction process, teachers can pay attention to here)
+1. Create the database and import [sql/JavaSecLab.sql](./sql/JavaSecLab.sql).
+2. Set the active profile to `dev` in [src/main/resources/application.yml](./src/main/resources/application.yml):
 
    ```yaml
    spring:
-     # Environment dev|docker
      profiles:
        active: dev
    ```
-   
-2. Modify the application-dev.yml configuration file
 
-```yaml
-username: root
-password: QWE123qwe
-url: jdbc:mysql://localhost:13306/JavaSecLab?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true&allowPublicKeyRetrieval=true&allowMultiQueries=true
-```
+3. Update the database connection in [src/main/resources/application-dev.yml](./src/main/resources/application-dev.yml):
 
-<img src="./pic/login.png" alt="logo" style="zoom:100%;" />
+   ```yaml
+   username: root
+   password: QWE123qwe
+   url: jdbc:mysql://localhost:13306/JavaSecLab?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true&allowPublicKeyRetrieval=true&allowMultiQueries=true
+   ```
 
-Initial password: admin/admin(can be changed in the background)
+4. Start the application from IDEA or with Maven.
 
-### Docker Deployment (**Recommended**)
+Default account: `admin/admin`
 
-> Condition: docker and Docker-Compose are installed
->
-> If the sql file is not initialized during docker deployment (that is, the database is empty), you need to manually import the sql file
+![login](./pic/login.png)
+
+### Docker Deployment
+
+Requirements:
+
+- Docker
+- Docker Compose
+
+Build and start the lab:
 
 ```shell
 mvn clean package -DskipTests
 docker-compose -p javaseclab up -d
 ```
 
-![image-20240905225532698](./pic/deploy-docker.png)
+If the database is empty after startup, manually import [sql/JavaSecLab.sql](./sql/JavaSecLab.sql).
 
-![image-20240905225532698](./pic/deploy-docker2.png)
+![docker deployment](./pic/deploy-docker.png)
 
-For details about deployment solutions and deployment questions, see：[Deployment guide](https://github.com/whgojp/JavaSecLab/wiki/%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97)
+![docker deployment](./pic/deploy-docker2.png)
 
-## Open source protocol
+For more deployment options and troubleshooting notes, see the [Deployment Guide](https://github.com/whgojp/JavaSecLab/wiki/%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97).
 
-​	**When we speak of free software, we are referring to freedom, not price.**
+## Security Notice
 
-This project follows [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0) protocol，the detailed content of License please see the [LICENSE](./LICENSE) file。
+JavaSecLab is a vulnerable lab project. It intentionally keeps dangerous endpoints, vulnerable dependencies, and insecure configurations for reproduction and teaching. Run it only locally or in an isolated network.
 
-## Update record
+Recommended precautions:
 
-Project detailed record update, please refer to [update log](https://github.com/whgojp/JavaSecLab/wiki/%E6%9B%B4%E6%96%B0%E6%97%A5%E5%BF%97)
+- Do not deploy JavaSecLab directly on a public network.
+- Use disposable accounts, test databases, and isolated containers.
+- Do not mount sensitive host directories into the container.
+- Review exposed ports before running Docker Compose.
+- Treat uploaded files, generated files, and logs as untrusted data.
 
-## A few Tips🙋
+The secure code examples in this project are for teaching and demonstration. Real business systems usually require authentication, auditing, rate limiting, data validation, dependency governance, monitoring, alerting, and defense in depth.
 
-1. Security issues: Because it is a vulnerability shooting range, it is not recommended to use it on the public network
-1. The security repair code in the project is for reference only, and the actual business vulnerability repair may be much more complex...
-1. **Problem/Suggestion feedback: If you encounter some project problems or better suggestions, you are welcome to raise an Issue or add a communication group for feedback **
-1. **See here, if the master thinks the project is useful, please move and click a star, thank you very much 🙏**
+## Contributing
 
-## About the author
+Issues and pull requests are welcome. Good contributions include:
 
-Author's blog：[今天是几号](https://blog.csdn.net/weixin_53009585)
+- New vulnerability scenarios with clear vulnerable and fixed code
+- More accurate source/sink notes and code-audit explanations
+- Better vulnerability traffic packets and analysis notes
+- Deployment fixes and documentation improvements
+- UI and interaction improvements that make the lab easier to teach with
 
-**If the master is also interested in development security, application security, SDL, vulnerability shooting range, etc., welcome to join the exchange group to discuss... **
+## License
+
+**When we speak of free software, we are referring to freedom, not price.**
+
+JavaSecLab is released under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0). See [LICENSE](./LICENSE) for details.
+
+## Changelog
+
+See the [Update Log](https://github.com/whgojp/JavaSecLab/wiki/%E6%9B%B4%E6%96%B0%E6%97%A5%E5%BF%97) for release notes and project history.
+
+## Author
+
+Author's blog: [今天是几号](https://blog.csdn.net/weixin_53009585)
+
+If you are interested in application security, secure development, SDL, DevSecOps, or vulnerability labs, feel free to join the community group.
 
 <div style="text-align: center;">
-    <img src="./pic/wechat.png" alt="description" width="271" height="366" />
-      <img src="./pic/group.png" alt="description" width="271" height="366" />
+  <img src="./pic/wechat.png" alt="WeChat" width="271" height="366" />
+  <img src="./pic/group.png" alt="Community group" width="271" height="366" />
 </div>
 
+## Sponsorship
 
-## Sponsor open source
-
-​	If you find this tool helpful, consider supporting the author's development efforts. Your sponsorship will be used to maintain the online server and continuously optimize the project function, thank you very much for your encouragement and support!
+If JavaSecLab helps you, sponsorship is appreciated. Support will be used for maintaining the online environment and continuously improving the project.
 
 <div style="text-align: center;">
-    <img src="./pic/donate.jpg" style="width: 40%; height: auto;"/>
-  </div>
-
-
+  <img src="./pic/donate.jpg" alt="Sponsor JavaSecLab" style="width: 40%; height: auto;"/>
+</div>

@@ -42,7 +42,10 @@ function request (url, method, data = {}, contentType, back){
                 error: error,
                 headers: xhr.getAllResponseHeaders()
             });
-            return typeof back === "function" && back(null);
+            var message = xhr.responseJSON && xhr.responseJSON.msg
+                ? xhr.responseJSON.msg
+                : "请求失败：" + (xhr.status || status) + " " + (error || xhr.statusText || "");
+            return typeof back === "function" && back({code: 1, msg: message});
         }
     });
 };
@@ -57,4 +60,3 @@ function postAjaxRequst (url, data, callBack) {
         return typeof callBack == "function" && callBack(res)
     })
 };
-

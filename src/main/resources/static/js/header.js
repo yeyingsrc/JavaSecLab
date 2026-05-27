@@ -24,4 +24,4 @@ document.writeln("<script src=\'/js/jquery-3.4.ueditor.min.js\'></script>");
 document.writeln("<script src=\'/js/bootstrap.js\'></script>");
 document.writeln("<script src=\'/js/codemirror.js\'></script>");
 document.writeln("<script src=\'/js/clike.js\'></script>");
-document.writeln("<script src=\'/js/staticcode.js\'></script>");
+document.writeln("<script src=\'/js/staticcode.js?v=20260524-csrf\'></script>");

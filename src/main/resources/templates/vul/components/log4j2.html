@@ -175,9 +175,11 @@
             CodeMirror(document.getElementById("vulLog4j2"), Object.assign({}, cmConfig, {
                 value: vulLog4j2
             }));
-            CodeMirror(document.getElementById("safeLog4j2"), Object.assign({}, cmConfigSafe, {
-                value: safeLog4j2
-            }));
+            if (document.getElementById("safeLog4j2")) {
+                CodeMirror(document.getElementById("safeLog4j2"), Object.assign({}, cmConfigSafe, {
+                    value: safeLog4j2
+                }));
+            }
 
         });
 
@@ -196,7 +198,7 @@
                 closeBtn: 1,
                 area: ['1116px', '572px'], // 宽高可以根据需要调整
                 shadeClose: true,
-                content: '<div style="text-align: center;"><img src="/static/images/vul/components/log4j.png" style="width: 100%; height: 50%;"></div>'
+                content: '<div style="text-align: center;"><img src="/images/vul/components/log4j.png" style="width: 100%; height: 50%;"></div>'
             });
         });
 

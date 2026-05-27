@@ -10,9 +10,13 @@ import top.whgojp.common.constant.SysConstant;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * @description 敏感信息泄漏-目录遍历
@@ -37,66 +41,18 @@ public class DirTraversalController {
 
     @GetMapping("/vul")
     @ResponseBody
-    public String vul(@RequestParam String dir) {
-        String staticFolderPath = sysConstant.getStaticFolder();
-        File baseDir = new File(staticFolderPath);
+    public String vul(@RequestParam(defaultValue = "/") String dir) {
+        File baseDir = resolveStaticBaseDir();
         File requestedDir = new File(baseDir, dir);
 
-        // 生成HTML输出
-        StringBuilder response = new StringBuilder();
-        response.append("<!DOCTYPE HTML>");
-        response.append("<html lang=\"en\">");
-        response.append("<head>");
-        response.append("<meta charset=\"utf-8\">");
-        response.append("<title>Directory listing for ").append(dir).append("</title>");
-        response.append("<script>");
-        response.append("function addBaseUrl(url) {");
-        response.append("  const baseUrl = window.location.origin;");
-        response.append("  return baseUrl + url;");
-        response.append("}");
-        response.append("</script>");
-        response.append("</head>");
-        response.append("<body>");
-        response.append("<h1>Directory listing for ").append(dir).append("</h1>");
-        response.append("<hr>");
-        response.append("<ul>");
-
-        File[] files = requestedDir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                response.append("<li>");
-                if (file.isDirectory()) {
-                    response.append("<a href=\"?dir=").append(dir);
-                    if (!dir.endsWith("/")) {
-                        response.append("/");
-                    }
-                    response.append(file.getName()).append("/\">").append(file.getName()).append("/</a>");
-                } else {
-                    response.append("<a href=\"javascript:void(0);\" onclick=\"window.location.href=addBaseUrl('").append(dir);
-                    if (!dir.endsWith("/")) {
-                        response.append("/");
-                    }
-                    response.append(file.getName()).append("');\">").append(file.getName()).append("</a>");
-                }
-                response.append("</li>");
-            }
-        } else {
-            response.append("Failed to list contents of the directory.");
-        }
-
-        response.append("</ul>");
-        response.append("<hr>");
-        response.append("</body>");
-        response.append("</html>");
-        return response.toString();
+        return renderDirectoryListing(dir, requestedDir, false);
     }
 
     @GetMapping("/safe1")
     @ResponseBody
     @SneakyThrows
-    public String safe1(@RequestParam String dir) {
-        String staticFolderPath = sysConstant.getStaticFolder();
-        File baseDir = new File(staticFolderPath);
+    public String safe1(@RequestParam(defaultValue = "/") String dir) {
+        File baseDir = resolveStaticBaseDir();
 
         String decodedDir = URLDecoder.decode(dir, StandardCharsets.UTF_8.name());
 
@@ -106,42 +62,90 @@ public class DirTraversalController {
         }
         File requestedDir = new File(baseDir, dir);
 
+        return renderDirectoryListing(dir, requestedDir, false);
+    }
 
-        // 生成HTML输出
+    @GetMapping("/safe2")
+    @ResponseBody
+    public String safe2(@RequestParam(defaultValue = "/") String dir) {
+        File baseDir = resolveStaticBaseDir();
+        String relativeDir = normalizeRelativeDir(dir);
+
+        // 检查请求的目录是否在规定目录内
+        try {
+            Path basePath = baseDir.getCanonicalFile().toPath();
+            File requestedDir = new File(baseDir, relativeDir);
+            Path requestedPath = requestedDir.getCanonicalFile().toPath();
+            if (!requestedPath.startsWith(basePath) || !requestedDir.isDirectory()) {
+                return "Directory not found or access denied.";
+            }
+            return renderDirectoryListing(dir, requestedDir, true);
+        } catch (IOException e) {
+            return "Error resolving directory path.";
+        }
+    }
+
+    private File resolveStaticBaseDir() {
+        File configuredDir = new File(sysConstant.getStaticFolder());
+        if (configuredDir.isDirectory() && hasVisibleFiles(configuredDir)) {
+            return configuredDir;
+        }
+
+        try {
+            java.net.URL resource = getClass().getClassLoader().getResource("static");
+            if (resource != null && "file".equals(resource.getProtocol())) {
+                return new File(resource.toURI());
+            }
+        } catch (URISyntaxException e) {
+            log.warn("解析classpath静态目录失败", e);
+        }
+
+        return configuredDir;
+    }
+
+    private boolean hasVisibleFiles(File dir) {
+        File[] files = dir.listFiles(file -> !file.isHidden());
+        return files != null && files.length > 0;
+    }
+
+    private String normalizeRelativeDir(String dir) {
+        if (dir == null || dir.isEmpty() || "/".equals(dir)) {
+            return "";
+        }
+        return dir.startsWith("/") ? dir.substring(1) : dir;
+    }
+
+    private String renderDirectoryListing(String displayDir, File requestedDir, boolean keepInsideBase) {
+        String normalizedDisplayDir = displayDir == null || displayDir.isEmpty() ? "/" : displayDir;
         StringBuilder response = new StringBuilder();
         response.append("<!DOCTYPE HTML>");
         response.append("<html lang=\"en\">");
         response.append("<head>");
         response.append("<meta charset=\"utf-8\">");
-        response.append("<title>Directory listing for ").append(dir).append("</title>");
-        response.append("<script>");
-        response.append("function addBaseUrl(url) {");
-        response.append("  const baseUrl = window.location.origin;");
-        response.append("  return baseUrl + url;");
-        response.append("}");
-        response.append("</script>");
+        response.append("<title>Directory listing for ").append(escapeHtml(normalizedDisplayDir)).append("</title>");
         response.append("</head>");
         response.append("<body>");
-        response.append("<h1>Directory listing for ").append(dir).append("</h1>");
+        response.append("<h1>Directory listing for ").append(escapeHtml(normalizedDisplayDir)).append("</h1>");
         response.append("<hr>");
         response.append("<ul>");
 
         File[] files = requestedDir.listFiles();
         if (files != null) {
+            Arrays.sort(files, Comparator.comparing(File::isFile).thenComparing(File::getName));
             for (File file : files) {
                 response.append("<li>");
+                String itemName = file.getName();
+                String childDir = appendPath(normalizedDisplayDir, itemName, file.isDirectory());
                 if (file.isDirectory()) {
-                    response.append("<a href=\"?dir=").append(dir);
-                    if (!dir.endsWith("/")) {
-                        response.append("/");
-                    }
-                    response.append(file.getName()).append("/\">").append(file.getName()).append("/</a>");
+                    response.append("<a href=\"?dir=").append(urlEncode(childDir)).append("\">")
+                            .append(escapeHtml(itemName)).append("/</a>");
                 } else {
-                    response.append("<a href=\"javascript:void(0);\" onclick=\"window.location.href=addBaseUrl('").append(dir);
-                    if (!dir.endsWith("/")) {
-                        response.append("/");
+                    if (keepInsideBase) {
+                        response.append(escapeHtml(itemName));
+                    } else {
+                        response.append("<a href=\"").append(escapeHtml(childDir)).append("\">")
+                                .append(escapeHtml(itemName)).append("</a>");
                     }
-                    response.append(file.getName()).append("');\">").append(file.getName()).append("</a>");
                 }
                 response.append("</li>");
             }
@@ -155,68 +159,28 @@ public class DirTraversalController {
         response.append("</html>");
         return response.toString();
     }
-    @GetMapping("/safe2")
-    @ResponseBody
-    public String safe2(@RequestParam String dir) {
-        String staticFolderPath = sysConstant.getStaticFolder();
-        File baseDir = new File(staticFolderPath);
-        File requestedDir = new File(baseDir, dir);
 
-        // 检查请求的目录是否在规定目录内
+    private String appendPath(String dir, String name, boolean directory) {
+        String prefix = (dir == null || dir.isEmpty() || "/".equals(dir)) ? "/" : dir + (dir.endsWith("/") ? "" : "/");
+        return prefix + name + (directory ? "/" : "");
+    }
+
+    private String urlEncode(String value) {
         try {
-            if (!requestedDir.getCanonicalPath().startsWith(baseDir.getCanonicalPath()) || !requestedDir.isDirectory()) {
-                return "Directory not found or access denied.";
-            }
-        } catch (IOException e) {
-            return "Error resolving directory path.";
+            return URLEncoder.encode(value, StandardCharsets.UTF_8.name()).replace("+", "%20");
+        } catch (java.io.UnsupportedEncodingException e) {
+            throw new IllegalStateException("UTF-8 encoding is not supported", e);
         }
+    }
 
-        // 生成HTML输出
-        StringBuilder response = new StringBuilder();
-        response.append("<!DOCTYPE HTML>");
-        response.append("<html lang=\"en\">");
-        response.append("<head>");
-        response.append("<meta charset=\"utf-8\">");
-        response.append("<title>Directory listing for ").append(dir).append("</title>");
-        response.append("<script>");
-        response.append("function addBaseUrl(url) {");
-        response.append("  const baseUrl = window.location.origin;");
-        response.append("  return baseUrl + url;");
-        response.append("}");
-        response.append("</script>");
-        response.append("</head>");
-        response.append("<body>");
-        response.append("<h1>Directory listing for ").append(dir).append("</h1>");
-        response.append("<hr>");
-        response.append("<ul>");
-
-        File[] files = requestedDir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                response.append("<li>");
-                if (file.isDirectory()) {
-                    response.append("<a href=\"?dir=").append(dir);
-                    if (!dir.endsWith("/")) {
-                        response.append("/");
-                    }
-                    response.append(file.getName()).append("/\">").append(file.getName()).append("/</a>");
-                } else {
-                    response.append("<a href=\"javascript:void(0);\" onclick=\"window.location.href=addBaseUrl('").append(dir);
-                    if (!dir.endsWith("/")) {
-                        response.append("/");
-                    }
-                    response.append(file.getName()).append("');\">").append(file.getName()).append("</a>");
-                }
-                response.append("</li>");
-            }
-        } else {
-            response.append("Failed to list contents of the directory.");
+    private String escapeHtml(String value) {
+        if (value == null) {
+            return "";
         }
-
-        response.append("</ul>");
-        response.append("<hr>");
-        response.append("</body>");
-        response.append("</html>");
-        return response.toString();
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 }

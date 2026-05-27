@@ -3,12 +3,12 @@ package top.whgojp.modules.components.jackson.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -29,8 +29,12 @@ public class JacksonController {
     }
 
     @RequestMapping("/vul")
-    public String vul(@RequestBody String content) {
+    @ResponseBody
+    public String vul(@RequestBody(required = false) String content) {
         try {
+            if (content == null || content.trim().isEmpty()) {
+                content = "[\"java.util.HashMap\",{\"name\":\"JavaSecLab\"}]";
+            }
             ObjectMapper mapper = new ObjectMapper();
             mapper.enableDefaultTyping(); // 启用多态类型处理
 
@@ -44,21 +48,18 @@ public class JacksonController {
     }
 
 
-    @PostMapping("/safe")
+    @RequestMapping("/safe")
     @ResponseBody
-    public String safeJackson(@RequestBody String payload) {
+    public String safeJackson(@RequestBody(required = false) String payload) {
         try {
+            if (payload == null || payload.trim().isEmpty()) {
+                payload = "{\"name\":\"JavaSecLab\"}";
+            }
             ObjectMapper mapper = new ObjectMapper();
-
-            // 启用安全的类型验证
-            mapper.activateDefaultTyping(
-                    LaissezFaireSubTypeValidator.instance,
-                    ObjectMapper.DefaultTyping.NON_FINAL
-            );
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
-            // 反序列化传入的JSON数据
-            Map<String, Object> safePayload = mapper.readValue(payload, Map.class);
+            // 不启用DefaultTyping，仅解析为普通Map结构。
+            Map<String, Object> safePayload = mapper.readValue(payload, new TypeReference<LinkedHashMap<String, Object>>() {});
             return mapper.writeValueAsString(safePayload);
         } catch (Exception e) {
             e.printStackTrace();

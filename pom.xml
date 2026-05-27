@@ -6,7 +6,7 @@
 
     <groupId>top.whgojp</groupId>
     <artifactId>JavaSecLab</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0</version>
     <name>Java综合漏洞平台</name>
     <description>hello JavaSecLab!</description>
     <parent>
@@ -24,7 +24,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <swagger.version>3.0.0</swagger.version>
         <hutool.version>5.8.21</hutool.version>
-        <lombok.version>1.18.4</lombok.version>
+        <lombok.version>1.18.38</lombok.version>
         <mybatis-plus.version>3.5.1</mybatis-plus.version>
 <!--        <mysql.version>8.0.33</mysql.version>-->
         <mysql.version>8.0.14</mysql.version>
@@ -258,6 +258,20 @@
     <build>
         <finalName>JavaSecLab</finalName>
         <plugins>
+            <!-- Explicit annotation processor path keeps Lombok working on newer JDKs. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <!-- Maven Surefire Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

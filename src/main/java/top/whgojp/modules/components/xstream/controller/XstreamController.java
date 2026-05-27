@@ -41,37 +41,62 @@ public class XstreamController {
 
     @RequestMapping("/vul")
     @ResponseBody
-    public String vul(@RequestBody String content) {
-        log.info("组件漏洞-Xstream\n" + "Payload:" + content);
-        XStream xs = new XStream();
-        Object result = xs.fromXML(content);  // 反序列化得到的对象
+    public String vul(@RequestBody(required = false) String content) {
+        try {
+            if (content == null || content.trim().isEmpty()) {
+                content = "<string>JavaSecLab</string>";
+            }
+            log.info("组件漏洞-Xstream\n" + "Payload:" + content);
+            XStream xs = new XStream();
+            Object result = xs.fromXML(content);  // 反序列化得到的对象
 
-        // 检查反序列化后的结果并返回相关信息
-        return "组件漏洞-Xstream Vul, 反序列化结果: \n" + result.toString();
+            // 检查反序列化后的结果并返回相关信息
+            return "组件漏洞-Xstream Vul, 反序列化结果: \n" + result;
+        } catch (Exception e) {
+            log.error("XStream反序列化失败", e);
+            return "组件漏洞-Xstream Vul 执行失败：" + e.getMessage();
+        }
     }
 
     @RequestMapping("/safe1")
-    public String safe1(@RequestBody String content) {
-        XStream xstream = new XStream();
-        // 首先清除默认设置，然后进行自定义设置
-        xstream.addPermission(NoTypePermission.NONE);
-        // 将ImageIO类加入黑名单
-        xstream.denyPermission(new ExplicitTypePermission(new Class[]{ImageIO.class}));
-        xstream.fromXML(content);
-        return "组件漏洞-Xstream Safe-BlackList";
+    @ResponseBody
+    public String safe1(@RequestBody(required = false) String content) {
+        try {
+            if (content == null || content.trim().isEmpty()) {
+                content = "<string>JavaSecLab</string>";
+            }
+            XStream xstream = new XStream();
+            // 黑名单示例：拒绝已知危险类型。
+            xstream.denyPermission(new ExplicitTypePermission(new Class[]{ImageIO.class}));
+            Object result = xstream.fromXML(content);
+            return "组件漏洞-Xstream Safe-BlackList, 解析结果：" + result;
+        } catch (Exception e) {
+            log.error("XStream黑名单场景解析失败", e);
+            return "组件漏洞-Xstream Safe-BlackList 执行失败：" + e.getMessage();
+        }
     }
     @RequestMapping("/safe2")
-    public String safe2(@RequestBody String content) {
-        XStream xstream = new XStream();
-         // 首先清除默认设置，然后进行自定义设置
-        xstream.addPermission(NoTypePermission.NONE);
-        // 添加一些基础的类型，如Array、NULL、primitive
-        xstream.addPermission(ArrayTypePermission.ARRAYS);
-        xstream.addPermission(NullPermission.NULL);
-        xstream.addPermission(PrimitiveTypePermission.PRIMITIVES);
-        // 添加自定义的类列表
-        xstream.addPermission(new ExplicitTypePermission(new Class[]{Date.class}));
-        return "组件漏洞-Xstream Safe-WhiteList";
+    @ResponseBody
+    public String safe2(@RequestBody(required = false) String content) {
+        try {
+            if (content == null || content.trim().isEmpty()) {
+                content = "<long>1</long>";
+            }
+            XStream xstream = new XStream();
+            // 首先清除默认设置，然后进行自定义设置
+            xstream.addPermission(NoTypePermission.NONE);
+            // 添加一些基础的类型，如Array、NULL、primitive
+            xstream.addPermission(ArrayTypePermission.ARRAYS);
+            xstream.addPermission(NullPermission.NULL);
+            xstream.addPermission(PrimitiveTypePermission.PRIMITIVES);
+            // 添加自定义的类列表
+            xstream.addPermission(new ExplicitTypePermission(new Class[]{Date.class}));
+            Object result = xstream.fromXML(content);
+            return "组件漏洞-Xstream Safe-WhiteList, 解析结果：" + result;
+        } catch (Exception e) {
+            log.error("XStream白名单场景解析失败", e);
+            return "组件漏洞-Xstream Safe-WhiteList 执行失败：" + e.getMessage();
+        }
     }
 
     // CVE-2020-26259 任意文件删除示例

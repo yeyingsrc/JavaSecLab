@@ -10,7 +10,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import top.whgojp.common.constant.SysConstant;
 import top.whgojp.common.enums.LoginError;
 
@@ -26,14 +25,10 @@ public class CustomSimpleUrlAuthenticationFailureHandler extends SimpleUrlAuthen
 
     private static final String DEFAULT_FAILURE_URL = SysConstant.LOGIN_URL;
 
-    private String defaultFailureUrl;
-
-
-
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        super.onAuthenticationFailure(request, response, exception);
         setDefaultFailureUrl(determineFailureUrl(exception));
+        super.onAuthenticationFailure(request, response, exception);
         log.info("当前异常："+exception.getMessage());
 
         String loginIp = request.getRemoteHost();
@@ -50,24 +45,22 @@ public class CustomSimpleUrlAuthenticationFailureHandler extends SimpleUrlAuthen
 
     }
     private String determineFailureUrl(AuthenticationException exception) {
-        // 默认设置登录错误页面为/login
-        defaultFailureUrl = StringUtils.hasLength(defaultFailureUrl) ? defaultFailureUrl : DEFAULT_FAILURE_URL;
-
+        String failureUrl = DEFAULT_FAILURE_URL;
         Integer failureType = determineFailureType(exception).getType();
 
         if (failureType != null) {
-            defaultFailureUrl += defaultFailureUrl.lastIndexOf("?") > 0 ? "&" : "?" + "error=" + failureType;
+            failureUrl += (failureUrl.lastIndexOf("?") > 0 ? "&" : "?") + "error=" + failureType;
         }
 
-        return defaultFailureUrl;
+        return failureUrl;
     }
 
     private LoginError determineFailureType(AuthenticationException exception) {
-        if (exception.getMessage() == "验证码为空"){
+        if ("验证码为空".equals(exception.getMessage())){
             return LoginError.CAPTCHANOTFOUND;
-        } else if (exception.getMessage() == "验证码过期") {
+        } else if ("验证码过期".equals(exception.getMessage())) {
             return LoginError.CAPTCHAEXPIRED;
-        } else if (exception.getMessage() == "验证码不正确") {
+        } else if ("验证码不正确".equals(exception.getMessage())) {
             return LoginError.CAPTCHAERROR;
         } else if (exception instanceof UsernameNotFoundException) {
             return LoginError.USERNAMENOTFOUND;
@@ -80,16 +73,6 @@ public class CustomSimpleUrlAuthenticationFailureHandler extends SimpleUrlAuthen
         }
 
         return LoginError.FAILURE;
-    }
-
-
-    public String getDefaultFailureUrl() {
-        return defaultFailureUrl;
-    }
-
-    @Override
-    public void setDefaultFailureUrl(String defaultFailureUrl) {
-        super.setDefaultFailureUrl(defaultFailureUrl);
     }
 
 }

@@ -40,24 +40,24 @@ public class ValidateCodeFilter extends OncePerRequestFilter {
 
             if (StrUtil.isBlank(captcha)) {
                 CustomAuthenticationException exception = new CustomAuthenticationException("验证码为空");
-//                log.error(exception.getMessage());
                 customSimpleUrlAuthenticationFailureHandler.onAuthenticationFailure(request, response, exception);
                 return;
             }
             HttpSession session = request.getSession();
-            String captchaCode = String.valueOf(session.getAttribute("captcha"));
+            Object captchaCodeObj = session.getAttribute("captcha");
+            String captchaCode = captchaCodeObj == null ? "" : String.valueOf(captchaCodeObj);
 
 
             if (StrUtil.isEmpty(captchaCode)) {
                 CustomAuthenticationException exception = new CustomAuthenticationException("验证码过期");
-//                log.error(exception.getMessage());
+                session.removeAttribute("captcha");
                 customSimpleUrlAuthenticationFailureHandler.onAuthenticationFailure(request, response, exception);
                 return;
             }
 
+            session.removeAttribute("captcha");
             if (!captcha.equalsIgnoreCase(captchaCode)) {
                 CustomAuthenticationException exception = new CustomAuthenticationException("验证码不正确");
-//                log.error("验证码不正确" + "；用户输入验证码：" + captcha + ";正确验证码：" + captchaCode);
                 customSimpleUrlAuthenticationFailureHandler.onAuthenticationFailure(request, response, exception);
                 return;
             }
