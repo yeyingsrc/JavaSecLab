@@ -928,3 +928,53 @@ SpEL 注入的本质是不可信输入进入表达式“可执行上下文”后
 | 阻断类型引用 | `GET /spel/safe?ex=T(java.lang.Math).abs(-1)` | Java 类型引用 | 返回“表达式被安全上下文限制”，说明类型引用被禁止 |
 | 阻断命令执行 | `GET /spel/safe?ex=T(java.lang.Runtime).getRuntime().exec('true')` | 命令执行表达式 | 返回“表达式被安全上下文限制”，不执行系统命令 |
 | 安全场景错误处理 | `GET /spel/safe?ex=T(java.lang.Runtime).getRuntime().exec(` | 语法错误表达式 | 返回“表达式被安全上下文限制”或解析错误信息 |
+## 反序列化
+
+当前覆盖 Java 原生 `ObjectInputStream.readObject()`、SnakeYAML `Yaml.load()`、XMLDecoder `readObject()` 三类 Java 反序列化入口。模块重点演示“不可信数据恢复为对象”时，攻击者如何通过对象图、类型标签、构造器、setter、`readObject` 或组件 gadget 链，把普通数据解析入口升级为代码执行、类加载、文件操作或拒绝服务风险。
+
+反序列化漏洞的本质是不可信输入进入对象构造和方法调用上下文。修复时优先避免使用 Java 原生序列化协议接收外部输入；确需解析时应采用 JSON/XML/YAML 普通数据绑定到固定 DTO，禁用任意类型解析，使用类型白名单、JEP 290 `ObjectInputFilter`、`SafeConstructor`、依赖升级、外部实体禁用、大小限制和隔离执行。单纯黑名单或关闭某个 gadget 开关只能降低特定利用链风险，不能视为完整修复。
+
+已覆盖类型
+
+| 分类 | 已有场景 | 结论 |
+| --- | --- | --- |
+| JDK 原生反序列化 | `/readObject/vul`、`/readObject/safe1`、`/readObject/safe2` | 覆盖 ObjectInputStream 直接读取不可信字节流、gadget 开关和类型白名单对照 |
+| SnakeYAML | `/snakeYaml/vul`、`/snakeYaml/safe` | 覆盖默认 Constructor 按 `!!类名` 实例化对象，以及 SafeConstructor 只解析基础类型 |
+| XMLDecoder | `/xmlDecoder/vul`、`/xmlDecoder/safe` | 覆盖 XMLDecoder 对象图执行方法调用，以及使用普通 XML 解析器替代危险对象反序列化 |
+
+模块覆盖符合综合性 Java 靶场定位，已经覆盖“原生协议 + 数据格式解析器 + JDK 对象图执行器”三条主线。后续如需增强，可补充“Hessian/Kryo/FST 二进制反序列化”“JNDI/RMI/LDAP 链路”“JEP 290 ObjectInputFilter 专项绕过与正确配置”“Jackson/Fastjson/XStream 与组件漏洞模块联动”“反序列化 DoS/深层对象图限制”等场景。当前 Fastjson、Jackson、XStream 已放在组件漏洞模块，保留在那里更清晰，避免和本模块重复。
+
+### ReadObject 测试
+
+页面：`/readObject`
+
+| 场景 | 请求 | 测试输入 | 预期结果 |
+| --- | --- | --- | --- |
+| 页面访问 | `GET /readObject` | 已登录会话 | 页面正常打开，展示原生反序列化、gadget 开关和白名单安全场景 |
+| 空 Payload | `POST /readObject/vul` | 不传 `payload` | 返回“Payload不能为空”或 Payload 错误提示，页面不出现 500 |
+| 良性对象反序列化 | `POST /readObject/vul` | `payload=rO0ABXQACkphdmFTZWNMYWI=` | 返回 `JavaSecLab`，说明服务端执行了 `ObjectInputStream.readObject()` |
+| Commons Collections 开关 | `POST /readObject/safe1` | 使用页面示例 payload | 返回执行失败或禁用提示，说明特定 gadget 链被限制；该方式不是完整防护 |
+| 类型白名单 | `POST /readObject/safe2` | 使用页面示例 gadget payload | 返回反序列化失败，说明非白名单类被拒绝；`String` 等协议原生类型可能正常通过，应结合 JEP 290 进一步限制 |
+
+### SnakeYAML 测试
+
+页面：`/snakeYaml`
+
+| 场景 | 请求 | 测试输入 | 预期结果 |
+| --- | --- | --- | --- |
+| 页面访问 | `GET /snakeYaml` | 已登录会话 | 页面正常打开，展示默认 Constructor 和 SafeConstructor 对照 |
+| 默认类型实例化 | `POST /snakeYaml/vul` | `payload=!!top.whgojp.modules.sqli.entity.Sqli {id: 1, username: test, password: pass}` | 返回解析结果中包含 `Sqli` 对象信息，说明 `!!类名` 被实例化 |
+| 普通 YAML 安全解析 | `POST /snakeYaml/safe` | `payload=name: JavaSecLab` | 返回普通 Map 解析结果 |
+| 阻断 Java 类型标签 | `POST /snakeYaml/safe` | `payload=!!top.whgojp.modules.sqli.entity.Sqli {id: 1, username: test, password: pass}` | 返回反序列化失败，说明 SafeConstructor 不允许任意 Java 类型构造 |
+
+### XMLDecoder 测试
+
+页面：`/xmlDecoder`
+
+| 场景 | 请求 | 测试输入 | 预期结果 |
+| --- | --- | --- | --- |
+| 页面访问 | `GET /xmlDecoder` | 已登录会话 | 页面正常打开，展示 XMLDecoder 对象图执行和普通 XML 解析器对照 |
+| 空 Payload | `POST /xmlDecoder/vul` | 不传 `payload` | 返回“Payload不能为空” |
+| XMLDecoder 命令执行链路 | `POST /xmlDecoder/vul` | `payload=true` | 返回“命令执行成功”，说明 XMLDecoder 构造并启动了 ProcessBuilder |
+| 普通 XML 解析器对照 | `POST /xmlDecoder/safe` | `payload=true` | 返回“命令解析成功:true”，只解析文本参数，不调用 ProcessBuilder.start() |
+| 安全场景空 Payload | `POST /xmlDecoder/safe` | 不传 `payload` | 返回“Payload不能为空”，页面不出现 500 |

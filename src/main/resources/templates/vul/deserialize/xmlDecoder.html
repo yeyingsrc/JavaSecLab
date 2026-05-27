@@ -14,7 +14,7 @@
                     <blockquote class="layui-elem-quote layui-quote-nm"
                                 style="font-size: 15px;background-color: #a7deefab;box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important">
                         <p>
-                        <pre>  XMLDecoder是Java标准库中提供的一个类，用于将XML格式的数据反序列化为Java对象。它是JavaBeans机制的一部分，能够将符合JavaBeans规范的XML文件解析为Java对象</pre>
+                        <pre>  XMLDecoder 是 JavaBeans 提供的对象图反序列化能力，不是普通 XML 解析器。它会根据 XML 中声明的 class、object、void、method 等节点实例化对象并调用方法，处理不可信 XML 时可能直接进入命令执行链路。</pre>
                         </p>
                     </blockquote>
                 </fieldset>
@@ -86,7 +86,7 @@
             <div class="layui-col-md12" style="margin-top: 10px">
                 <div class="layui-row layui-col-space15">
                     <div class="layui-col-md6">
-                        <h1><span class="iconfont icon-anquan"> 安全代码：使用SAX替换XMLDecoder</span></h1>
+                        <h1><span class="iconfont icon-anquan"> 安全场景：使用普通XML解析器</span></h1>
                         <div class="layui-tab layui-tab-brief">
                             <div class="layui-tab-content">
                                 <div class="layui-tab-item layui-show">
@@ -118,8 +118,7 @@
                                     <div class="layui-card">
                                         <div class="layui-card-header"><i class="fa fa-bullhorn icon-tip"></i>tips</div>
                                         <div class="layui-card-body layui-text layadmin-text">
-                                            <pre style="color: #28333e;font-size: 15px;">SAX:事件驱动的特性和内存管理方式，更加安全，适合处理不受信任的数据
-XMLDecoder:由于反序列化过程的性质，存在较高的安全风险，建议仅在处理可信数据时使用</pre>
+                                            <pre style="color: #28333e;font-size: 15px;">SAX 只按 XML 文本结构读取节点，不会按 class 属性实例化 Java 对象，也不会调用 ProcessBuilder.start()。真实业务应使用普通 XML/JSON 解析器绑定到固定 DTO，并禁用外部实体、DTD 和危险类型映射。</pre>
                                         </div>
                                     </div>
                                 </div>
@@ -218,7 +217,7 @@ XMLDecoder:由于反序列化过程的性质，存在较高的安全风险，建
                 closeBtn: 1,
                 area: ['781px', '440px'], // 宽高可以根据需要调整
                 shadeClose: true,
-                content: '<div style="text-align: center;"><img src="/static/images/vul/components/deserialize.jpg" style="width: 100%; height: 50%;"></div>'
+                content: '<div style="text-align: center;"><img src="/images/vul/components/deserialize.jpg" style="width: 100%; height: 50%;"></div>'
             });
         });
 

