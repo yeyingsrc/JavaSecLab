@@ -2384,33 +2384,28 @@ const vul2Credential = "vul2Credential"
 
 // java专题 SPEL注入
 const spelVul = "public R vul(String ex) {\n" +
-    "    // 创建SpEL解析器，ExpressionParser接口用于表示解析器，SpelExpressionParser为默认实现\n" +
-    "    ExpressionParser parser = new SpelExpressionParser();\n" +
-    "    \n" +
-    "    // Expression expression = parser.parseExpression(ex);\n" +
-    "    // String result =  expression.getValue().toString();\n" +
-    "    \n" +
-    "    // 构造上下文 上下文其实就是设置好某些变量的值，执行表达式时根据这些设置好的内容区获取值 在不配置的情况下具有默认类型的上下文\n" +
-    "    EvaluationContext evaluationContext = new StandardEvaluationContext();\n" +
-    "    \n" +
-    "    // 解析表达式，将用户输入的字符串解析为Expression对象\n" +
-    "    Expression exp = parser.parseExpression(ex);\n" +
-    "    \n" +
-    "    // 通过上下文计算表达式的值，并将结果转换为字符串\n" +
-    "    String result = exp.getValue(evaluationContext).toString();\n" +
-    "    return R.ok(result);\n" +
+    "    try {\n" +
+    "        ExpressionParser parser = new SpelExpressionParser();\n" +
+    "        EvaluationContext evaluationContext = new StandardEvaluationContext();\n" +
+    "        Expression exp = parser.parseExpression(ex);\n" +
+    "        Object result = exp.getValue(evaluationContext);\n" +
+    "        return R.ok(String.valueOf(result));\n" +
+    "    } catch (Exception e) {\n" +
+    "        return R.error(\"SPEL表达式执行失败：\" + e.getMessage());\n" +
+    "    }\n" +
     "}"
 
 const spelSafe = "public R safe(String ex) {\n" +
-    "    ExpressionParser parser = new SpelExpressionParser();\n" +
-    "    \n" +
-    "    // 使用 SimpleEvaluationContext 限制表达式功能(Java类型引用、构造函数调用、Bean引用)，防止危险的操作\n" +
-    "    EvaluationContext simpleContext = SimpleEvaluationContext.forReadOnlyDataBinding().build();\n" +
-    "    \n" +
-    "    Expression exp = parser.parseExpression(ex);\n" +
-    "    \n" +
-    "    String result = exp.getValue(simpleContext).toString();\n" +
-    "    return R.ok(result);\n" +
+    "    try {\n" +
+    "        ExpressionParser parser = new SpelExpressionParser();\n" +
+    "        // 使用 SimpleEvaluationContext 限制 Java 类型引用、构造函数调用、Bean 引用等危险能力\n" +
+    "        EvaluationContext simpleContext = SimpleEvaluationContext.forReadOnlyDataBinding().build();\n" +
+    "        Expression exp = parser.parseExpression(ex);\n" +
+    "        Object result = exp.getValue(simpleContext);\n" +
+    "        return R.ok(String.valueOf(result));\n" +
+    "    } catch (Exception e) {\n" +
+    "        return R.error(\"表达式被安全上下文限制：\" + e.getMessage());\n" +
+    "    }\n" +
     "}\n"
 
 const sstiVul = "public String vul1(@RequestParam String para, Model model) {\n" +

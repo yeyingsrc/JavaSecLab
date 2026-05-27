@@ -37,31 +37,39 @@ public class SPELController {
     @ApiImplicitParam(name = "ex", value = "表达式", dataType = "String", paramType = "query", dataTypeClass = String.class)
     @GetMapping("/vul")
     public R vul(@ApiParam(name = "ex", value = "表达式", required = true) @RequestParam String ex) {
-        // 创建SpEL解析器，ExpressionParser接口用于表示解析器，SpelExpressionParser为默认实现
-        ExpressionParser parser = new SpelExpressionParser();
-//        Expression expression = parser.parseExpression(ex);
-//        String result =  expression.getValue().toString();
-        // 构造上下文 上下文其实就是设置好某些变量的值，执行表达式时根据这些设置好的内容区获取值 在不配置的情况下具有默认类型的上下文
-        EvaluationContext evaluationContext = new StandardEvaluationContext();
-        // 解析表达式，将用户输入的字符串解析为Expression对象
-        Expression exp = parser.parseExpression(ex);
-        // 通过上下文计算表达式的值，并将结果转换为字符串
-        String result = exp.getValue(evaluationContext).toString();
-        log.info("[+]SPEL表达式注入："+ex);
-        return R.ok(result);
+        try {
+            // 创建SpEL解析器，ExpressionParser接口用于表示解析器，SpelExpressionParser为默认实现
+            ExpressionParser parser = new SpelExpressionParser();
+            // 构造上下文 上下文其实就是设置好某些变量的值，执行表达式时根据这些设置好的内容区获取值 在不配置的情况下具有默认类型的上下文
+            EvaluationContext evaluationContext = new StandardEvaluationContext();
+            // 解析表达式，将用户输入的字符串解析为Expression对象
+            Expression exp = parser.parseExpression(ex);
+            // 通过上下文计算表达式的值，并将结果转换为字符串
+            Object result = exp.getValue(evaluationContext);
+            log.info("[+]SPEL表达式注入：" + ex);
+            return R.ok(String.valueOf(result));
+        } catch (Exception e) {
+            log.error("[+]SPEL表达式执行失败：" + ex, e);
+            return R.error("SPEL表达式执行失败：" + e.getMessage());
+        }
     }
 
     @ResponseBody
     @ApiImplicitParam(name = "ex", value = "表达式", dataType = "String", paramType = "query", dataTypeClass = String.class)
     @GetMapping("/safe")
     public R safe(@ApiParam(name = "ex", value = "表达式", required = true) @RequestParam String ex) {
-        // 使用 SimpleEvaluationContext 限制表达式功能(Java类型引用、构造函数调用、Bean引用)，防止危险的操作
-        ExpressionParser parser = new SpelExpressionParser();
-        EvaluationContext simpleContext = SimpleEvaluationContext.forReadOnlyDataBinding().build();
-        Expression exp = parser.parseExpression(ex);
-        String result = exp.getValue(simpleContext).toString();
-        log.info("[-]SPEL表达式注入："+ex);
-        return R.ok(result);
+        try {
+            // 使用 SimpleEvaluationContext 限制表达式功能(Java类型引用、构造函数调用、Bean引用)，防止危险的操作
+            ExpressionParser parser = new SpelExpressionParser();
+            EvaluationContext simpleContext = SimpleEvaluationContext.forReadOnlyDataBinding().build();
+            Expression exp = parser.parseExpression(ex);
+            Object result = exp.getValue(simpleContext);
+            log.info("[-]SPEL表达式注入：" + ex);
+            return R.ok(String.valueOf(result));
+        } catch (Exception e) {
+            log.warn("[-]SPEL安全场景拦截表达式：" + ex, e);
+            return R.error("表达式被安全上下文限制：" + e.getMessage());
+        }
     }
 
 
